@@ -1,0 +1,35 @@
+{
+  "name": "@lynx/admin-panel",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "peerDependencies": {
+    "next": "^15",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1"
+  },
+  "dependencies": {
+    "@blocknote/core": "^0.54.0",
+    "@blocknote/react": "^0.54.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.33.0",
+    "react-datepicker": "^9.1.0",
+    "tailwind-merge": "^3.6.0"
+  }
+}

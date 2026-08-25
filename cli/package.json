@@ -1,0 +1,19 @@
+{
+  "name": "create-admin-panel",
+  "version": "1.0.0",
+  "description": "Installs @lynx/admin-panel into the current project",
+  "type": "module",
+  "bin": {
+    "admin-install": "./bin/index.js"
+  },
+  "files": [
+    "bin",
+    "templates"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "prompts": "^2.4.2"
+  }
+}
