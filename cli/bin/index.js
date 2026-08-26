@@ -31,7 +31,7 @@ async function confirmOverwrite(label, filePath) {
 }
 
 async function main() {
-  console.log("\n📦 Installing @lynx/admin-panel...\n");
+  console.log("\n📦 Installing @archlynx/admin-panel...\n");
 
   // 1. Clone the source repo into a temp dir
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "admin-panel-"));
@@ -82,14 +82,14 @@ async function main() {
     }
   }
 
-  // 4. Add @lynx/admin-panel as a workspace dependency
-  console.log("Adding @lynx/admin-panel as a workspace dependency...");
+  // 4. Add @archlynx/admin-panel as a workspace dependency
+  console.log("Adding @archlynx/admin-panel as a workspace dependency...");
   try {
-    run(`pnpm add @lynx/admin-panel --workspace`);
+    run(`pnpm add @archlynx/admin-panel --workspace`);
   } catch {
     console.warn(
       "Could not run `pnpm add` automatically. Run it yourself:\n" +
-      "  pnpm add @lynx/admin-panel --workspace"
+      "  pnpm add @archlynx/admin-panel --workspace"
     );
   }
 
@@ -132,7 +132,7 @@ async function main() {
   console.log("3. Fill in src/admin/entities.js with your real entities.\n");
   console.log("4. Mount it — e.g. src/app/admin/layout.js:");
   console.log('   import "@/admin.config";');
-  console.log('   import { AdminProvider } from "@lynx/admin-panel";\n');
+  console.log('   import { AdminProvider } from "@archlynx/admin-panel";\n');
   console.log("5. pnpm i && pnpm run dev\n");
 }
 

@@ -1,4 +1,4 @@
-import { setRuntimeConfig } from "@lynx/admin-panel";
+import { setRuntimeConfig } from "@archlynx/admin-panel";
 import { entities } from "./admin/entities";
 
 export const adminConfig = {
