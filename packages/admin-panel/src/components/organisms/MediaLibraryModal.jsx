@@ -7,11 +7,7 @@ import { ImageIcon, Loader2, Upload, X } from "lucide-react";
 
 import { Input } from "../atoms/Input.jsx";
 
-// adjust import path as needed
-
-// adjust import path to wherever ApiProvider actually lives
-
-import {  getMediaRoute } from "../../lib/runtime.config.js";
+import { getMediaRoute } from "../../lib/runtime.config.js";
 import { resolveUrl } from "../../utils/utils.js";
 
 function formatCategoryLabel(key) {
@@ -30,13 +26,12 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
   const [previewUrl, setPreviewUrl] = useState(null);
 
   const fileInputRef = useRef(null);
-  const uploadFieldsRef = useRef(null); // wraps the Input fieldsets, queried by name on submit
+  const uploadFieldsRef = useRef(null);
 
   const items = Object.fromEntries(
     Object.entries(data ?? {}).filter(([, val]) => Array.isArray(val)),
   );
 
-  // Revoke the object URL whenever it's replaced or the component unmounts
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -76,11 +71,11 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
     if (title) formData.append("title", title);
     formData.append("type", "image");
 
-    const created = await post("/media", formData); // toasts + loading handled by ApiProvider
+    const created = await post("/media", formData);
     setUploading(false);
     if (created) {
       resetUploadTab();
-      mutate(); // refresh the list from the server
+      mutate();
       setActiveTab("browse");
     }
   };
@@ -89,27 +84,42 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
     e.stopPropagation();
     if (!confirm("Delete this image from the media library?")) return;
     setDeletingId(id);
-    await del(`/media/${id}`); // toasts + loading handled by ApiProvider
+    await del(`/media/${id}`);
     setDeletingId(null);
     mutate();
   };
 
   return (
-    <div className="media-library-overlay" onClick={onClose}>
-      <div className="media-library-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="media-library-header">
-          <h3>Media Library</h3>
-          <button type="button" className="media-library-close-btn" onClick={onClose} title="Close">
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="flex w-full max-w-[720px] max-h-[85vh] flex-col gap-4 overflow-hidden rounded-xl bg-white p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="m-0 text-lg font-semibold text-gray-900">Media Library</h3>
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+            onClick={onClose}
+            title="Close"
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="media-library-tabs" role="tablist">
+        <div className="flex gap-1 border-b border-gray-300" role="tablist">
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "browse"}
-            className={`media-library-tab${activeTab === "browse" ? "media-library-tab--active" : ""}`}
+            className={`inline-flex translate-y-px items-center gap-1.5 border-b-2 px-3.5 py-2 text-sm font-medium transition-colors ${
+              activeTab === "browse"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-900"
+            }`}
             onClick={() => setActiveTab("browse")}
           >
             <ImageIcon size={15} />
@@ -119,7 +129,11 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
             type="button"
             role="tab"
             aria-selected={activeTab === "upload"}
-            className={`media-library-tab${activeTab === "upload" ? "media-library-tab--active" : ""}`}
+            className={`inline-flex translate-y-px items-center gap-1.5 border-b-2 px-3.5 py-2 text-sm font-medium transition-colors ${
+              activeTab === "upload"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-900"
+            }`}
             onClick={() => setActiveTab("upload")}
           >
             <Upload size={15} />
@@ -129,45 +143,51 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
 
         {activeTab === "browse" ? (
           isLoading ? (
-            <div className="media-library-loading">
-              <Loader2 size={20} className="media-library-spin" />
+            <div className="flex items-center justify-center gap-2 px-4 py-10 text-sm text-gray-500">
+              <Loader2 size={20} className="animate-spin" />
               <span>Loading media…</span>
             </div>
           ) : Object.keys(items).length === 0 ? (
-            <p className="media-library-empty">No images uploaded yet.</p>
+            <p className="flex items-center justify-center gap-2 px-4 py-10 text-sm text-gray-500">
+              No images uploaded yet.
+            </p>
           ) : (
-            <div className="media-library-categories">
+            <div className="flex flex-col gap-2.5 overflow-y-scroll">
               {Object.entries(items).map(([key, val]) => (
-                <div key={key} className="media-library-category-section">
-                  <h4 className="media-library-category-heading">{formatCategoryLabel(key)}</h4>
+                <div key={key}>
+                  <h4 className="mb-2 text-sm font-semibold text-gray-700">
+                    {formatCategoryLabel(key)}
+                  </h4>
                   {!val || val.length === 0 ? (
-                    <p className="media-library-empty">No images in this category yet.</p>
+                    <p className="flex items-center justify-center gap-2 px-4 py-10 text-sm text-gray-500">
+                      No images in this category yet.
+                    </p>
                   ) : (
-                    <div className="media-library-grid">
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3 overflow-y-auto p-0.5">
                       {val
                         .filter((item) => item.url)
                         .map((item, n) => (
                           <div
                             key={`${key}-${n}`}
-                            className="media-library-item"
+                            className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border border-gray-300 transition-all hover:-translate-y-px hover:border-blue-600"
                             onClick={() => onSelect(item)}
                             title={item.filename}
                           >
                             <Image
                               src={resolveUrl(item.url)}
                               alt={item.alt || item.filename || "media item"}
-                              className="media-library-item-img"
+                              className="h-full w-full object-cover bg-gray-100"
                               fill
                             />
                             <button
                               type="button"
-                              className="media-library-item-delete-btn"
+                              className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-100"
                               onClick={(e) => handleDelete(e, item.id)}
                               title="Delete image"
                               disabled={deletingId === item.id}
                             >
                               {deletingId === item.id ? (
-                                <Loader2 size={14} className="media-library-spin" />
+                                <Loader2 size={14} className="animate-spin" />
                               ) : (
                                 <X size={14} />
                               )}
@@ -181,9 +201,7 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
             </div>
           )
         ) : (
-          <div
-            className={`gap-sm flex-col media-library-upload-form${uploading ? "media-library-upload-form--busy" : ""}`}
-          >
+          <div className={`flex flex-col gap-2 ${uploading ? "opacity-70" : ""}`}>
             <label
               className={`relative flex h-[200px] w-full cursor-pointer flex-col items-center justify-center gap-1.5 overflow-hidden rounded-lg border-2 border-dashed border-gray-300 ${
                 uploading ? "cursor-default opacity-70" : ""
@@ -196,7 +214,6 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
                 </>
               ) : previewUrl ? (
                 <>
-                  {/* Plain <img> for a blob: object URL — next/image can't optimize it */}
                   <img
                     src={previewUrl}
                     alt="Selected file preview"
@@ -206,7 +223,7 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
                     type="button"
                     className="absolute top-1.5 right-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
                     onClick={(e) => {
-                      e.preventDefault(); // don't reopen the file picker
+                      e.preventDefault();
                       resetUploadTab();
                     }}
                     title="Remove selected image"
@@ -231,7 +248,7 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
               />
             </label>
 
-            <div ref={uploadFieldsRef}>
+            <div ref={uploadFieldsRef} className="flex flex-col gap-2">
               <Input name="alt_text" placeholder="Alt text" disabled={uploading} />
               <Input name="title" placeholder="Title" disabled={uploading} />
             </div>

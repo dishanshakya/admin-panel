@@ -1,7 +1,5 @@
 "use client";
-
 import { useEffect, useState } from "react";
-
 import { MediaLibraryModal } from "../organisms/MediaLibraryModal.jsx";
 import { resolveUrl } from "../../utils/utils.js";
 
@@ -26,7 +24,6 @@ export function ImageUploader({
   }, [defaultCover]);
 
   const handleSelectMedia = (media) => {
-    console.log(media);
     setCoverPreview(media.url);
     setSelectedMediaId(media.id);
     setAlt(media.alt_text);
@@ -46,28 +43,32 @@ export function ImageUploader({
   };
 
   return (
-    <div className="cover-image-uploader">
-      <label className="cover-image-label">{caption}</label>
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-semibold text-gray-700">{caption}</label>
+
       {coverPreview ? (
-        <div className="cover-preview-wrapper">
+        <div className="relative w-full h-40 rounded-lg overflow-hidden border border-gray-200">
           <img
             src={resolveUrl(coverPreview)}
             alt="Cover preview"
-            className="cover-preview-img"
-            style={{ objectFit: "contain" }}
+            className="block w-full h-full max-h-[280px] max-w-[300px] object-contain"
             onClick={() => setModalOpen(true)}
           />
           <button
             type="button"
             onClick={handleRemoveImage}
-            className="cover-remove-btn"
+            className="absolute top-2 right-2 flex items-center justify-center w-7 h-7 rounded-full bg-black/55 text-white text-xs cursor-pointer transition-colors hover:bg-red-600/85"
             title="Remove image"
           >
             ✕
           </button>
         </div>
       ) : (
-        <button type="button" className="cover-dropzone" onClick={() => setModalOpen(true)}>
+        <button
+          type="button"
+          className="flex flex-col items-center justify-center gap-2 h-40 p-5 border-2 border-dashed border-gray-300 rounded-lg text-gray-400 cursor-pointer transition-colors hover:border-indigo-500 hover:text-indigo-500"
+          onClick={() => setModalOpen(true)}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="32"
@@ -83,14 +84,13 @@ export function ImageUploader({
             <circle cx="8.5" cy="8.5" r="1.5" />
             <path d="M21 15l-5-5L5 21" />
           </svg>
-          <span>Click to choose from media library</span>
-          <span className="cover-dropzone-hint">PNG, JPG, WEBP up to 10MB</span>
+          <span className="text-sm font-medium">Click to choose from media library</span>
+          <span className="text-xs text-gray-300">PNG, JPG, WEBP up to 10MB</span>
         </button>
       )}
 
       {/* Hidden field so the selected media id still submits with the form, if needed */}
       <input type="hidden" name={name} id={id} value={coverPreview ?? ""} readOnly />
-
       <input type="hidden" name={altname || `${name?.split("_")?.[0]}_alt`} value={alt} readOnly />
       <input
         type="hidden"
