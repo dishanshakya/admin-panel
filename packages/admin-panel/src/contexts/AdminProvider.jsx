@@ -2,6 +2,7 @@
 import { ApiProvider } from "./ApiContext.jsx";
 import { AuthProvider } from "./AuthContext.jsx";
 import { AdminGate } from "../components/templates/AdminGate.jsx";
+import { ToastProvider } from "./ToastContext.jsx"
 import { AdminShell } from "../components/templates/AdminShell.jsx";
 import { getRuntimeConfig } from "../lib/runtime.config.js";
 
@@ -18,9 +19,11 @@ export function AdminProvider({ children }) {
   return (
     <ApiProvider baseUrl={config.apiBaseUrl} >
       <AuthProvider>
-        <AdminGate>
-          <AdminShell>{children}</AdminShell>
-        </AdminGate>
+        <ToastProvider>
+          <AdminGate>
+            <AdminShell>{children}</AdminShell>
+          </AdminGate>
+        </ToastProvider>
       </AuthProvider>
     </ApiProvider>
   );

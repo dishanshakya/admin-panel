@@ -65,3 +65,24 @@ export function slugify(text) {
     .replace(/-+/g, "-");
   return slug;
 }
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isUuid(val) {
+  return typeof val === "string" && UUID_REGEX.test(val);
+}
+
+export function removeEmptyFields(obj) {
+  const result = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === null || value === undefined) continue;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed === "") continue;
+      result[key] = trimmed;
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}

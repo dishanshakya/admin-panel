@@ -74,7 +74,7 @@ export function ApiProvider({ baseUrl, children }) {
     async (fn, options = {}) => {
       try {
         const data = await fn();
-        if (options.success) console.log(options.success);
+        if (options.success) options.success(data);
         if (options.redirect) {
           await router.push(options.redirect);
         }
