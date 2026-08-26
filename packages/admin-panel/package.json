@@ -22,7 +22,8 @@
     "react-dom": "^19"
   },
   "devDependencies": {
-    "tsup": "^8.5.1"
+    "tsup": "^8.5.1",
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "@blocknote/core": "^0.54.0",
