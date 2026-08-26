@@ -1,6 +1,6 @@
 {
   "name": "@archlynx/create-admin-panel",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Installs @archlynx/admin-panel into the current project",
   "type": "module",
   "bin": {

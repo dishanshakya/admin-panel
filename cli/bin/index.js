@@ -85,6 +85,7 @@ async function main() {
   // 4. Add @archlynx/admin-panel as a workspace dependency
   console.log("Adding @archlynx/admin-panel as a workspace dependency...");
   try {
+    run(`pnpm install`);
     run(`pnpm add @archlynx/admin-panel --workspace`);
   } catch {
     console.warn(
