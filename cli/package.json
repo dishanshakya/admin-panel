@@ -1,6 +1,6 @@
 {
-  "name": "create-admin-panel",
-  "version": "1.0.1",
+  "name": "@lynx/create-admin-panel",
+  "version": "1.0.0",
   "description": "Installs @lynx/admin-panel into the current project",
   "type": "module",
   "bin": {
