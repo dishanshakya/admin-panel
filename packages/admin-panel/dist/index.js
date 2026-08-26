@@ -1369,149 +1369,166 @@ function MediaLibraryModal({ onClose, onSelect, name }) {
     setDeletingId(null);
     mutate();
   };
-  return /* @__PURE__ */ jsx17("div", { className: "media-library-overlay", onClick: onClose, children: /* @__PURE__ */ jsxs9("div", { className: "media-library-modal", onClick: (e) => e.stopPropagation(), children: [
-    /* @__PURE__ */ jsxs9("div", { className: "media-library-header", children: [
-      /* @__PURE__ */ jsx17("h3", { children: "Media Library" }),
-      /* @__PURE__ */ jsx17("button", { type: "button", className: "media-library-close-btn", onClick: onClose, title: "Close", children: /* @__PURE__ */ jsx17(X2, { size: 18 }) })
-    ] }),
-    /* @__PURE__ */ jsxs9("div", { className: "media-library-tabs", role: "tablist", children: [
-      /* @__PURE__ */ jsxs9(
-        "button",
+  return /* @__PURE__ */ jsx17(
+    "div",
+    {
+      className: "fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4",
+      onClick: onClose,
+      children: /* @__PURE__ */ jsxs9(
+        "div",
         {
-          type: "button",
-          role: "tab",
-          "aria-selected": activeTab === "browse",
-          className: `media-library-tab${activeTab === "browse" ? "media-library-tab--active" : ""}`,
-          onClick: () => setActiveTab("browse"),
+          className: "flex w-full max-w-[720px] max-h-[85vh] flex-col gap-4 overflow-hidden rounded-xl bg-white p-5 shadow-2xl",
+          onClick: (e) => e.stopPropagation(),
           children: [
-            /* @__PURE__ */ jsx17(ImageIcon, { size: 15 }),
-            /* @__PURE__ */ jsx17("span", { children: "Browse" })
-          ]
-        }
-      ),
-      /* @__PURE__ */ jsxs9(
-        "button",
-        {
-          type: "button",
-          role: "tab",
-          "aria-selected": activeTab === "upload",
-          className: `media-library-tab${activeTab === "upload" ? "media-library-tab--active" : ""}`,
-          onClick: () => setActiveTab("upload"),
-          children: [
-            /* @__PURE__ */ jsx17(Upload, { size: 15 }),
-            /* @__PURE__ */ jsx17("span", { children: "Upload" })
+            /* @__PURE__ */ jsxs9("div", { className: "flex items-center justify-between", children: [
+              /* @__PURE__ */ jsx17("h3", { className: "m-0 text-lg font-semibold text-gray-900", children: "Media Library" }),
+              /* @__PURE__ */ jsx17(
+                "button",
+                {
+                  type: "button",
+                  className: "flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900",
+                  onClick: onClose,
+                  title: "Close",
+                  children: /* @__PURE__ */ jsx17(X2, { size: 18 })
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs9("div", { className: "flex gap-1 border-b border-gray-300", role: "tablist", children: [
+              /* @__PURE__ */ jsxs9(
+                "button",
+                {
+                  type: "button",
+                  role: "tab",
+                  "aria-selected": activeTab === "browse",
+                  className: `inline-flex translate-y-px items-center gap-1.5 border-b-2 px-3.5 py-2 text-sm font-medium transition-colors ${activeTab === "browse" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-900"}`,
+                  onClick: () => setActiveTab("browse"),
+                  children: [
+                    /* @__PURE__ */ jsx17(ImageIcon, { size: 15 }),
+                    /* @__PURE__ */ jsx17("span", { children: "Browse" })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsxs9(
+                "button",
+                {
+                  type: "button",
+                  role: "tab",
+                  "aria-selected": activeTab === "upload",
+                  className: `inline-flex translate-y-px items-center gap-1.5 border-b-2 px-3.5 py-2 text-sm font-medium transition-colors ${activeTab === "upload" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-900"}`,
+                  onClick: () => setActiveTab("upload"),
+                  children: [
+                    /* @__PURE__ */ jsx17(Upload, { size: 15 }),
+                    /* @__PURE__ */ jsx17("span", { children: "Upload" })
+                  ]
+                }
+              )
+            ] }),
+            activeTab === "browse" ? isLoading ? /* @__PURE__ */ jsxs9("div", { className: "flex items-center justify-center gap-2 px-4 py-10 text-sm text-gray-500", children: [
+              /* @__PURE__ */ jsx17(Loader2, { size: 20, className: "animate-spin" }),
+              /* @__PURE__ */ jsx17("span", { children: "Loading media\u2026" })
+            ] }) : Object.keys(items).length === 0 ? /* @__PURE__ */ jsx17("p", { className: "flex items-center justify-center gap-2 px-4 py-10 text-sm text-gray-500", children: "No images uploaded yet." }) : /* @__PURE__ */ jsx17("div", { className: "flex flex-col gap-2.5 overflow-y-scroll", children: Object.entries(items).map(([key, val]) => /* @__PURE__ */ jsxs9("div", { children: [
+              /* @__PURE__ */ jsx17("h4", { className: "mb-2 text-sm font-semibold text-gray-700", children: formatCategoryLabel(key) }),
+              !val || val.length === 0 ? /* @__PURE__ */ jsx17("p", { className: "flex items-center justify-center gap-2 px-4 py-10 text-sm text-gray-500", children: "No images in this category yet." }) : /* @__PURE__ */ jsx17("div", { className: "grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3 overflow-y-auto p-0.5", children: val.filter((item) => item.url).map((item, n) => /* @__PURE__ */ jsxs9(
+                "div",
+                {
+                  className: "group relative aspect-square cursor-pointer overflow-hidden rounded-lg border border-gray-300 transition-all hover:-translate-y-px hover:border-blue-600",
+                  onClick: () => onSelect(item),
+                  title: item.filename,
+                  children: [
+                    /* @__PURE__ */ jsx17(
+                      Image,
+                      {
+                        src: resolveUrl(item.url),
+                        alt: item.alt || item.filename || "media item",
+                        className: "h-full w-full object-cover bg-gray-100",
+                        fill: true
+                      }
+                    ),
+                    /* @__PURE__ */ jsx17(
+                      "button",
+                      {
+                        type: "button",
+                        className: "absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-100",
+                        onClick: (e) => handleDelete(e, item.id),
+                        title: "Delete image",
+                        disabled: deletingId === item.id,
+                        children: deletingId === item.id ? /* @__PURE__ */ jsx17(Loader2, { size: 14, className: "animate-spin" }) : /* @__PURE__ */ jsx17(X2, { size: 14 })
+                      }
+                    )
+                  ]
+                },
+                `${key}-${n}`
+              )) })
+            ] }, key)) }) : /* @__PURE__ */ jsxs9("div", { className: `flex flex-col gap-2 ${uploading ? "opacity-70" : ""}`, children: [
+              /* @__PURE__ */ jsxs9(
+                "label",
+                {
+                  className: `relative flex h-[200px] w-full cursor-pointer flex-col items-center justify-center gap-1.5 overflow-hidden rounded-lg border-2 border-dashed border-gray-300 ${uploading ? "cursor-default opacity-70" : ""} ${previewUrl ? "border-solid p-0" : ""}`,
+                  children: [
+                    uploading ? /* @__PURE__ */ jsxs9(Fragment2, { children: [
+                      /* @__PURE__ */ jsx17(Loader2, { size: 28, className: "animate-spin" }),
+                      /* @__PURE__ */ jsx17("span", { children: "Uploading\u2026" })
+                    ] }) : previewUrl ? /* @__PURE__ */ jsxs9(Fragment2, { children: [
+                      /* @__PURE__ */ jsx17(
+                        "img",
+                        {
+                          src: previewUrl,
+                          alt: "Selected file preview",
+                          className: "absolute inset-0 h-full w-full object-contain"
+                        }
+                      ),
+                      /* @__PURE__ */ jsx17(
+                        "button",
+                        {
+                          type: "button",
+                          className: "absolute top-1.5 right-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80",
+                          onClick: (e) => {
+                            e.preventDefault();
+                            resetUploadTab();
+                          },
+                          title: "Remove selected image",
+                          children: /* @__PURE__ */ jsx17(X2, { size: 14 })
+                        }
+                      )
+                    ] }) : /* @__PURE__ */ jsxs9(Fragment2, { children: [
+                      /* @__PURE__ */ jsx17(Upload, { size: 28 }),
+                      /* @__PURE__ */ jsx17("span", { children: "Click to choose an image" }),
+                      /* @__PURE__ */ jsx17("span", { className: "text-xs text-gray-500", children: "PNG, JPG, WEBP up to 10MB" })
+                    ] }),
+                    /* @__PURE__ */ jsx17(
+                      "input",
+                      {
+                        ref: fileInputRef,
+                        type: "file",
+                        accept: "image/png, image/jpeg, image/webp",
+                        onChange: handleFileChange,
+                        hidden: true,
+                        disabled: uploading
+                      }
+                    )
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsxs9("div", { ref: uploadFieldsRef, className: "flex flex-col gap-2", children: [
+                /* @__PURE__ */ jsx17(Input, { name: "alt_text", placeholder: "Alt text", disabled: uploading }),
+                /* @__PURE__ */ jsx17(Input, { name: "title", placeholder: "Title", disabled: uploading })
+              ] }),
+              /* @__PURE__ */ jsx17(
+                "button",
+                {
+                  type: "button",
+                  className: "btn btn-primary",
+                  onClick: handleUpload,
+                  disabled: uploading || !previewUrl,
+                  children: uploading ? "Uploading\u2026" : "Upload"
+                }
+              )
+            ] })
           ]
         }
       )
-    ] }),
-    activeTab === "browse" ? isLoading ? /* @__PURE__ */ jsxs9("div", { className: "media-library-loading", children: [
-      /* @__PURE__ */ jsx17(Loader2, { size: 20, className: "media-library-spin" }),
-      /* @__PURE__ */ jsx17("span", { children: "Loading media\u2026" })
-    ] }) : Object.keys(items).length === 0 ? /* @__PURE__ */ jsx17("p", { className: "media-library-empty", children: "No images uploaded yet." }) : /* @__PURE__ */ jsx17("div", { className: "media-library-categories", children: Object.entries(items).map(([key, val]) => /* @__PURE__ */ jsxs9("div", { className: "media-library-category-section", children: [
-      /* @__PURE__ */ jsx17("h4", { className: "media-library-category-heading", children: formatCategoryLabel(key) }),
-      !val || val.length === 0 ? /* @__PURE__ */ jsx17("p", { className: "media-library-empty", children: "No images in this category yet." }) : /* @__PURE__ */ jsx17("div", { className: "media-library-grid", children: val.filter((item) => item.url).map((item, n) => /* @__PURE__ */ jsxs9(
-        "div",
-        {
-          className: "media-library-item",
-          onClick: () => onSelect(item),
-          title: item.filename,
-          children: [
-            /* @__PURE__ */ jsx17(
-              Image,
-              {
-                src: resolveUrl(item.url),
-                alt: item.alt || item.filename || "media item",
-                className: "media-library-item-img",
-                fill: true
-              }
-            ),
-            /* @__PURE__ */ jsx17(
-              "button",
-              {
-                type: "button",
-                className: "media-library-item-delete-btn",
-                onClick: (e) => handleDelete(e, item.id),
-                title: "Delete image",
-                disabled: deletingId === item.id,
-                children: deletingId === item.id ? /* @__PURE__ */ jsx17(Loader2, { size: 14, className: "media-library-spin" }) : /* @__PURE__ */ jsx17(X2, { size: 14 })
-              }
-            )
-          ]
-        },
-        `${key}-${n}`
-      )) })
-    ] }, key)) }) : /* @__PURE__ */ jsxs9(
-      "div",
-      {
-        className: `gap-sm flex-col media-library-upload-form${uploading ? "media-library-upload-form--busy" : ""}`,
-        children: [
-          /* @__PURE__ */ jsxs9(
-            "label",
-            {
-              className: `relative flex h-[200px] w-full cursor-pointer flex-col items-center justify-center gap-1.5 overflow-hidden rounded-lg border-2 border-dashed border-gray-300 ${uploading ? "cursor-default opacity-70" : ""} ${previewUrl ? "border-solid p-0" : ""}`,
-              children: [
-                uploading ? /* @__PURE__ */ jsxs9(Fragment2, { children: [
-                  /* @__PURE__ */ jsx17(Loader2, { size: 28, className: "animate-spin" }),
-                  /* @__PURE__ */ jsx17("span", { children: "Uploading\u2026" })
-                ] }) : previewUrl ? /* @__PURE__ */ jsxs9(Fragment2, { children: [
-                  /* @__PURE__ */ jsx17(
-                    "img",
-                    {
-                      src: previewUrl,
-                      alt: "Selected file preview",
-                      className: "absolute inset-0 h-full w-full object-contain"
-                    }
-                  ),
-                  /* @__PURE__ */ jsx17(
-                    "button",
-                    {
-                      type: "button",
-                      className: "absolute top-1.5 right-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80",
-                      onClick: (e) => {
-                        e.preventDefault();
-                        resetUploadTab();
-                      },
-                      title: "Remove selected image",
-                      children: /* @__PURE__ */ jsx17(X2, { size: 14 })
-                    }
-                  )
-                ] }) : /* @__PURE__ */ jsxs9(Fragment2, { children: [
-                  /* @__PURE__ */ jsx17(Upload, { size: 28 }),
-                  /* @__PURE__ */ jsx17("span", { children: "Click to choose an image" }),
-                  /* @__PURE__ */ jsx17("span", { className: "text-xs text-gray-500", children: "PNG, JPG, WEBP up to 10MB" })
-                ] }),
-                /* @__PURE__ */ jsx17(
-                  "input",
-                  {
-                    ref: fileInputRef,
-                    type: "file",
-                    accept: "image/png, image/jpeg, image/webp",
-                    onChange: handleFileChange,
-                    hidden: true,
-                    disabled: uploading
-                  }
-                )
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsxs9("div", { ref: uploadFieldsRef, children: [
-            /* @__PURE__ */ jsx17(Input, { name: "alt_text", placeholder: "Alt text", disabled: uploading }),
-            /* @__PURE__ */ jsx17(Input, { name: "title", placeholder: "Title", disabled: uploading })
-          ] }),
-          /* @__PURE__ */ jsx17(
-            "button",
-            {
-              type: "button",
-              className: "btn btn-primary",
-              onClick: handleUpload,
-              disabled: uploading || !previewUrl,
-              children: uploading ? "Uploading\u2026" : "Upload"
-            }
-          )
-        ]
-      }
-    )
-  ] }) });
+    }
+  );
 }
 
 // src/components/templates/ImageUploader.jsx
@@ -1537,7 +1554,6 @@ function ImageUploader({
     setCoverPreview(defaultCover);
   }, [defaultCover]);
   const handleSelectMedia = (media) => {
-    console.log(media);
     setCoverPreview(media.url);
     setSelectedMediaId(media.id);
     setAlt(media.alt_text);
@@ -1554,16 +1570,15 @@ function ImageUploader({
     setCoverPreview(null);
     setSelectedMediaId(null);
   };
-  return /* @__PURE__ */ jsxs10("div", { className: "cover-image-uploader", children: [
-    /* @__PURE__ */ jsx18("label", { className: "cover-image-label", children: caption }),
-    coverPreview ? /* @__PURE__ */ jsxs10("div", { className: "cover-preview-wrapper", children: [
+  return /* @__PURE__ */ jsxs10("div", { className: "flex flex-col gap-2", children: [
+    /* @__PURE__ */ jsx18("label", { className: "text-sm font-semibold text-gray-700", children: caption }),
+    coverPreview ? /* @__PURE__ */ jsxs10("div", { className: "relative w-full h-40 rounded-lg overflow-hidden border border-gray-200", children: [
       /* @__PURE__ */ jsx18(
         "img",
         {
           src: resolveUrl(coverPreview),
           alt: "Cover preview",
-          className: "cover-preview-img",
-          style: { objectFit: "contain" },
+          className: "block w-full h-full max-h-[280px] max-w-[300px] object-contain",
           onClick: () => setModalOpen(true)
         }
       ),
@@ -1572,34 +1587,42 @@ function ImageUploader({
         {
           type: "button",
           onClick: handleRemoveImage,
-          className: "cover-remove-btn",
+          className: "absolute top-2 right-2 flex items-center justify-center w-7 h-7 rounded-full bg-black/55 text-white text-xs cursor-pointer transition-colors hover:bg-red-600/85",
           title: "Remove image",
           children: "\u2715"
         }
       )
-    ] }) : /* @__PURE__ */ jsxs10("button", { type: "button", className: "cover-dropzone", onClick: () => setModalOpen(true), children: [
-      /* @__PURE__ */ jsxs10(
-        "svg",
-        {
-          xmlns: "http://www.w3.org/2000/svg",
-          width: "32",
-          height: "32",
-          viewBox: "0 0 24 24",
-          fill: "none",
-          stroke: "currentColor",
-          strokeWidth: "1.5",
-          strokeLinecap: "round",
-          strokeLinejoin: "round",
-          children: [
-            /* @__PURE__ */ jsx18("rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }),
-            /* @__PURE__ */ jsx18("circle", { cx: "8.5", cy: "8.5", r: "1.5" }),
-            /* @__PURE__ */ jsx18("path", { d: "M21 15l-5-5L5 21" })
-          ]
-        }
-      ),
-      /* @__PURE__ */ jsx18("span", { children: "Click to choose from media library" }),
-      /* @__PURE__ */ jsx18("span", { className: "cover-dropzone-hint", children: "PNG, JPG, WEBP up to 10MB" })
-    ] }),
+    ] }) : /* @__PURE__ */ jsxs10(
+      "button",
+      {
+        type: "button",
+        className: "flex flex-col items-center justify-center gap-2 h-40 p-5 border-2 border-dashed border-gray-300 rounded-lg text-gray-400 cursor-pointer transition-colors hover:border-indigo-500 hover:text-indigo-500",
+        onClick: () => setModalOpen(true),
+        children: [
+          /* @__PURE__ */ jsxs10(
+            "svg",
+            {
+              xmlns: "http://www.w3.org/2000/svg",
+              width: "32",
+              height: "32",
+              viewBox: "0 0 24 24",
+              fill: "none",
+              stroke: "currentColor",
+              strokeWidth: "1.5",
+              strokeLinecap: "round",
+              strokeLinejoin: "round",
+              children: [
+                /* @__PURE__ */ jsx18("rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }),
+                /* @__PURE__ */ jsx18("circle", { cx: "8.5", cy: "8.5", r: "1.5" }),
+                /* @__PURE__ */ jsx18("path", { d: "M21 15l-5-5L5 21" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsx18("span", { className: "text-sm font-medium", children: "Click to choose from media library" }),
+          /* @__PURE__ */ jsx18("span", { className: "text-xs text-gray-300", children: "PNG, JPG, WEBP up to 10MB" })
+        ]
+      }
+    ),
     /* @__PURE__ */ jsx18("input", { type: "hidden", name, id, value: coverPreview ?? "", readOnly: true }),
     /* @__PURE__ */ jsx18("input", { type: "hidden", name: altname || `${(_a = name == null ? void 0 : name.split("_")) == null ? void 0 : _a[0]}_alt`, value: alt, readOnly: true }),
     /* @__PURE__ */ jsx18(
