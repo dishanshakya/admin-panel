@@ -1,5 +1,5 @@
 import { setRuntimeConfig } from "@archlynx/admin-panel";
-import { entities } from "./admin/entities";
+import { entities } from "./app/admin/entities";
 
 export const adminConfig = {
   apiBaseUrl: process.env.NEXT_PUBLIC_API,

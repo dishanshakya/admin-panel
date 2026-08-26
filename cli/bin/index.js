@@ -110,7 +110,7 @@ async function main() {
   // 6. Scaffold src/admin/entities.js
   const entitiesTarget = "src/admin/entities.js";
   if (await confirmOverwrite("entities.js", entitiesTarget)) {
-    fs.mkdirSync(path.join(CWD, "src", "admin"), { recursive: true });
+    fs.mkdirSync(path.join(CWD, "src","app", "admin"), { recursive: true });
     fs.copyFileSync(
       path.join(TEMPLATES_DIR, "entities.template.js"),
       path.join(CWD, entitiesTarget)
