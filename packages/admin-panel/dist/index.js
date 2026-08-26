@@ -82,7 +82,7 @@ function ApiProvider({ baseUrl, children }) {
     async (fn, options = {}) => {
       try {
         const data = await fn();
-        if (options.success) console.log(options.success);
+        if (options.success) options.success(data);
         if (options.redirect) {
           await router.push(options.redirect);
         }
@@ -168,15 +168,141 @@ function AdminGate({ children }) {
   return children;
 }
 
+// src/contexts/ToastContext.jsx
+import {
+  createContext as createContext3,
+  useCallback as useCallback2,
+  useContext as useContext3,
+  useRef,
+  useState as useState3
+} from "react";
+import { jsx as jsx3, jsxs } from "react/jsx-runtime";
+var ToastContext = createContext3(null);
+function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState3([]);
+  const idRef = useRef(0);
+  const addToast = useCallback2((message, type = "success", duration = 4e3) => {
+    const id = ++idRef.current;
+    const text = message instanceof Error ? message.message : String(message);
+    setToasts((prev) => [...prev, { id, message: text, type, exiting: false }]);
+    setTimeout(() => {
+      setToasts(
+        (prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t)
+      );
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 350);
+    }, duration);
+  }, []);
+  const dismiss = useCallback2((id) => {
+    setToasts(
+      (prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t)
+    );
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 350);
+  }, []);
+  const success = useCallback2(
+    (message, duration) => addToast(message, "success", duration),
+    [addToast]
+  );
+  const error = useCallback2(
+    (message, duration) => addToast(message, "error", duration),
+    [addToast]
+  );
+  const info = useCallback2(
+    (message, duration) => addToast(message, "info", duration),
+    [addToast]
+  );
+  return /* @__PURE__ */ jsxs(ToastContext.Provider, { value: { success, error, info, addToast }, children: [
+    children,
+    /* @__PURE__ */ jsx3("div", { className: "toast-container", "aria-live": "polite", "aria-atomic": "false", children: toasts.map((toast) => /* @__PURE__ */ jsx3(Toast, { toast, onDismiss: dismiss }, toast.id)) })
+  ] });
+}
+function Toast({ toast, onDismiss }) {
+  const icons = {
+    success: /* @__PURE__ */ jsxs("svg", { viewBox: "0 0 20 20", fill: "none", className: "toast-icon", children: [
+      /* @__PURE__ */ jsx3("circle", { cx: "10", cy: "10", r: "9", stroke: "currentColor", strokeWidth: "1.5" }),
+      /* @__PURE__ */ jsx3(
+        "path",
+        {
+          d: "M6 10.5l2.5 2.5 5-5",
+          stroke: "currentColor",
+          strokeWidth: "1.75",
+          strokeLinecap: "round",
+          strokeLinejoin: "round"
+        }
+      )
+    ] }),
+    error: /* @__PURE__ */ jsxs("svg", { viewBox: "0 0 20 20", fill: "none", className: "toast-icon", children: [
+      /* @__PURE__ */ jsx3("circle", { cx: "10", cy: "10", r: "9", stroke: "currentColor", strokeWidth: "1.5" }),
+      /* @__PURE__ */ jsx3(
+        "path",
+        {
+          d: "M7 7l6 6M13 7l-6 6",
+          stroke: "currentColor",
+          strokeWidth: "1.75",
+          strokeLinecap: "round"
+        }
+      )
+    ] }),
+    info: /* @__PURE__ */ jsxs("svg", { viewBox: "0 0 20 20", fill: "none", className: "toast-icon", children: [
+      /* @__PURE__ */ jsx3("circle", { cx: "10", cy: "10", r: "9", stroke: "currentColor", strokeWidth: "1.5" }),
+      /* @__PURE__ */ jsx3(
+        "path",
+        {
+          d: "M10 9v5M10 6.5v.5",
+          stroke: "currentColor",
+          strokeWidth: "1.75",
+          strokeLinecap: "round"
+        }
+      )
+    ] })
+  };
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: `toast toast--${toast.type} ${toast.exiting ? "toast--exit" : ""}`,
+      role: "alert",
+      children: [
+        icons[toast.type],
+        /* @__PURE__ */ jsx3("span", { className: "toast-message", children: toast.message }),
+        /* @__PURE__ */ jsx3(
+          "button",
+          {
+            className: "toast-close",
+            onClick: () => onDismiss(toast.id),
+            "aria-label": "Dismiss",
+            children: /* @__PURE__ */ jsx3("svg", { viewBox: "0 0 12 12", fill: "none", children: /* @__PURE__ */ jsx3(
+              "path",
+              {
+                d: "M1 1l10 10M11 1L1 11",
+                stroke: "currentColor",
+                strokeWidth: "1.5",
+                strokeLinecap: "round"
+              }
+            ) })
+          }
+        )
+      ]
+    }
+  );
+}
+function useToast() {
+  const ctx = useContext3(ToastContext);
+  if (!ctx) throw new Error("useToast must be used inside <ToastProvider>");
+  return ctx;
+}
+
 // src/components/templates/AdminShell.jsx
-import { useState as useState3 } from "react";
+import { useState as useState4 } from "react";
 import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 // src/components/organisms/AdminNav.jsx
 import { usePathname as usePathname2 } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
-import { jsx as jsx3, jsxs } from "react/jsx-runtime";
+import { jsx as jsx4, jsxs as jsxs2 } from "react/jsx-runtime";
 function AdminNav({ items, panel }) {
   const pathname = usePathname2();
   const visibleitems = {
@@ -186,15 +312,15 @@ function AdminNav({ items, panel }) {
     },
     ...items
   };
-  return /* @__PURE__ */ jsx3("ul", { className: "flex flex-col gap-1", children: Object.entries(visibleitems ?? {}).map(([key, value]) => {
+  return /* @__PURE__ */ jsx4("ul", { className: "flex flex-col gap-1", children: Object.entries(visibleitems ?? {}).map(([key, value]) => {
     const isactive = pathname.startsWith("/admin/" + key);
-    return /* @__PURE__ */ jsx3("li", { title: key, className: "w-full", children: /* @__PURE__ */ jsx3(Link, { href: `/admin/${key}`, className: "block w-full", children: /* @__PURE__ */ jsxs(
+    return /* @__PURE__ */ jsx4("li", { title: key, className: "w-full", children: /* @__PURE__ */ jsx4(Link, { href: `/admin/${key}`, className: "block w-full", children: /* @__PURE__ */ jsxs2(
       "div",
       {
         className: `flex items-center gap-3 rounded-lg border p-2 text-sm font-medium transition-colors ${isactive ? "border-gray-200 bg-white text-gray-900 shadow-sm" : "border-transparent text-gray-500 hover:bg-white hover:text-gray-900"} ${panel ? "" : "justify-center"}`,
         children: [
-          /* @__PURE__ */ jsx3(value.icon, { size: 18, className: isactive ? "text-gray-900" : "text-gray-400" }),
-          panel && /* @__PURE__ */ jsx3("span", { children: value.label })
+          /* @__PURE__ */ jsx4(value.icon, { size: 18, className: isactive ? "text-gray-900" : "text-gray-400" }),
+          panel && /* @__PURE__ */ jsx4("span", { children: value.label })
         ]
       }
     ) }) }, key);
@@ -202,9 +328,9 @@ function AdminNav({ items, panel }) {
 }
 
 // src/components/organisms/AdminNavLogo.jsx
-import { jsx as jsx4 } from "react/jsx-runtime";
+import { jsx as jsx5 } from "react/jsx-runtime";
 function Logo({ panel }) {
-  return /* @__PURE__ */ jsx4("div", { className: "flex h-10 items-center", children: panel ? /* @__PURE__ */ jsx4("img", { src: "/logo.png", alt: "Logo", className: "h-7 w-auto object-contain" }) : /* @__PURE__ */ jsx4(
+  return /* @__PURE__ */ jsx5("div", { className: "flex h-10 items-center", children: panel ? /* @__PURE__ */ jsx5("img", { src: "/logo.png", alt: "Logo", className: "h-7 w-auto object-contain" }) : /* @__PURE__ */ jsx5(
     "img",
     {
       src: "/favicon.ico",
@@ -217,7 +343,7 @@ function Logo({ panel }) {
 // src/components/molecules/Breadcrumb.jsx
 import { usePathname as usePathname3, useRouter as useRouter4 } from "next/navigation";
 import { ArrowLeft, ChevronRight, House } from "lucide-react";
-import { jsx as jsx5, jsxs as jsxs2 } from "react/jsx-runtime";
+import { jsx as jsx6, jsxs as jsxs3 } from "react/jsx-runtime";
 function Breadcrumb() {
   const pathname = usePathname3();
   const router = useRouter4();
@@ -227,33 +353,33 @@ function Breadcrumb() {
     label: segment.charAt(0).toUpperCase() + segment.slice(1),
     path: "/" + segments.slice(0, i + 1).join("/")
   }));
-  return /* @__PURE__ */ jsxs2("div", { className: "flex items-center gap-3", children: [
-    /* @__PURE__ */ jsx5(
+  return /* @__PURE__ */ jsxs3("div", { className: "flex items-center gap-3", children: [
+    /* @__PURE__ */ jsx6(
       "button",
       {
         type: "button",
         onClick: () => router.back(),
         className: "flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900",
         "aria-label": "Go back",
-        children: /* @__PURE__ */ jsx5(ArrowLeft, { size: 20 })
+        children: /* @__PURE__ */ jsx6(ArrowLeft, { size: 20 })
       }
     ),
-    /* @__PURE__ */ jsxs2("div", { className: "flex flex-wrap items-center gap-1", children: [
-      /* @__PURE__ */ jsxs2(
+    /* @__PURE__ */ jsxs3("div", { className: "flex flex-wrap items-center gap-1", children: [
+      /* @__PURE__ */ jsxs3(
         "button",
         {
           type: "button",
           onClick: () => router.push("/"),
           className: "flex items-center gap-1.5 rounded-md px-1 py-1 text-gray-500 transition-colors hover:text-gray-900",
           children: [
-            /* @__PURE__ */ jsx5(House, { size: 14 }),
-            /* @__PURE__ */ jsx5("span", { className: "text-sm", children: "Home" })
+            /* @__PURE__ */ jsx6(House, { size: 14 }),
+            /* @__PURE__ */ jsx6("span", { className: "text-sm", children: "Home" })
           ]
         }
       ),
-      crumbs.map((crumb, i) => /* @__PURE__ */ jsxs2("div", { className: "flex items-center gap-1", children: [
-        /* @__PURE__ */ jsx5(ChevronRight, { size: 16, className: "text-gray-400" }),
-        i === crumbs.length - 1 ? /* @__PURE__ */ jsx5("span", { className: "text-sm font-semibold text-gray-900", children: crumb.label }) : /* @__PURE__ */ jsx5(
+      crumbs.map((crumb, i) => /* @__PURE__ */ jsxs3("div", { className: "flex items-center gap-1", children: [
+        /* @__PURE__ */ jsx6(ChevronRight, { size: 16, className: "text-gray-400" }),
+        i === crumbs.length - 1 ? /* @__PURE__ */ jsx6("span", { className: "text-sm font-semibold text-gray-900", children: crumb.label }) : /* @__PURE__ */ jsx6(
           "button",
           {
             type: "button",
@@ -269,9 +395,9 @@ function Breadcrumb() {
 
 // src/components/templates/AdminShell.jsx
 import { useRouter as useRouter5 } from "next/navigation";
-import { jsx as jsx6, jsxs as jsxs3 } from "react/jsx-runtime";
+import { jsx as jsx7, jsxs as jsxs4 } from "react/jsx-runtime";
 function AdminShell({ children }) {
-  const [panel, setPanel] = useState3(true);
+  const [panel, setPanel] = useState4(true);
   const { user } = useAuth();
   const { post } = useApi();
   const router = useRouter5();
@@ -286,43 +412,43 @@ function AdminShell({ children }) {
       return (_a = entity.roles) == null ? void 0 : _a.includes(user == null ? void 0 : user.role);
     })
   );
-  return /* @__PURE__ */ jsxs3("div", { className: "flex h-screen bg-black-500", children: [
-    /* @__PURE__ */ jsxs3(
+  return /* @__PURE__ */ jsxs4("div", { className: "flex h-screen bg-black-500", children: [
+    /* @__PURE__ */ jsxs4(
       "div",
       {
         className: `relative flex flex-col gap-1 border-r border-gray-200 bg-gray-50 p-3 transition-all duration-200 ${panel ? "w-[220px]" : "w-[72px]"}`,
         children: [
-          /* @__PURE__ */ jsx6(
+          /* @__PURE__ */ jsx7(
             "button",
             {
               type: "button",
               onClick: () => setPanel((prev) => !prev),
               title: panel ? "Collapse sidebar" : "Expand sidebar",
               className: "absolute top-8 -right-3.5 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition-colors hover:text-gray-900 focus:outline-none",
-              children: panel ? /* @__PURE__ */ jsx6(PanelLeftClose, { size: 16 }) : /* @__PURE__ */ jsx6(PanelLeftOpen, { size: 16 })
+              children: panel ? /* @__PURE__ */ jsx7(PanelLeftClose, { size: 16 }) : /* @__PURE__ */ jsx7(PanelLeftOpen, { size: 16 })
             }
           ),
-          /* @__PURE__ */ jsx6("div", { className: "px-1 py-2", children: /* @__PURE__ */ jsx6(Logo, { panel }) }),
-          /* @__PURE__ */ jsx6("div", { className: "mt-2 h-px bg-gray-200" }),
-          /* @__PURE__ */ jsx6("div", { className: "mt-2 flex-1 overflow-y-auto", children: /* @__PURE__ */ jsx6(AdminNav, { items: visibleEntities, panel }) })
+          /* @__PURE__ */ jsx7("div", { className: "px-1 py-2", children: /* @__PURE__ */ jsx7(Logo, { panel }) }),
+          /* @__PURE__ */ jsx7("div", { className: "mt-2 h-px bg-gray-200" }),
+          /* @__PURE__ */ jsx7("div", { className: "mt-2 flex-1 overflow-y-auto", children: /* @__PURE__ */ jsx7(AdminNav, { items: visibleEntities, panel }) })
         ]
       }
     ),
-    /* @__PURE__ */ jsxs3("div", { className: "flex flex-1 p-4 gap-4 flex-col overflow-y-auto", children: [
-      /* @__PURE__ */ jsxs3("div", { className: "flex justify-between w-full", children: [
-        /* @__PURE__ */ jsx6(Breadcrumb, {}),
-        /* @__PURE__ */ jsxs3("div", { className: "flex gap-md items-center", children: [
-          /* @__PURE__ */ jsx6("span", { className: "rounded-md p-1 bg-gray-500 text-white text-xs", children: user == null ? void 0 : user.role }),
-          /* @__PURE__ */ jsx6("button", { className: "wrapper-btn", title: "Logout", onClick: handleLogout, children: /* @__PURE__ */ jsx6(LogOut, { size: 18 }) })
+    /* @__PURE__ */ jsxs4("div", { className: "flex flex-1 p-4 gap-4 flex-col overflow-y-auto", children: [
+      /* @__PURE__ */ jsxs4("div", { className: "flex justify-between w-full", children: [
+        /* @__PURE__ */ jsx7(Breadcrumb, {}),
+        /* @__PURE__ */ jsxs4("div", { className: "flex gap-md items-center", children: [
+          /* @__PURE__ */ jsx7("span", { className: "rounded-md p-1 bg-gray-500 text-white text-xs", children: user == null ? void 0 : user.role }),
+          /* @__PURE__ */ jsx7("button", { className: "wrapper-btn", title: "Logout", onClick: handleLogout, children: /* @__PURE__ */ jsx7(LogOut, { size: 18 }) })
         ] })
       ] }),
-      /* @__PURE__ */ jsx6("div", { className: "flex-1 ", children })
+      /* @__PURE__ */ jsx7("div", { className: "flex-1 ", children })
     ] })
   ] });
 }
 
 // src/contexts/AdminProvider.jsx
-import { jsx as jsx7 } from "react/jsx-runtime";
+import { jsx as jsx8 } from "react/jsx-runtime";
 function AdminProvider({ children }) {
   const config = getRuntimeConfig();
   if (!(config == null ? void 0 : config.apiBaseUrl)) {
@@ -330,16 +456,16 @@ function AdminProvider({ children }) {
       "[@lynx/admin-panel] Missing config. Make sure <AdminConfigInit config={adminConfig} /> is mounted in your root layout before any admin routes render."
     );
   }
-  return /* @__PURE__ */ jsx7(ApiProvider, { baseUrl: config.apiBaseUrl, children: /* @__PURE__ */ jsx7(AuthProvider, { children: /* @__PURE__ */ jsx7(AdminGate, { children: /* @__PURE__ */ jsx7(AdminShell, { children }) }) }) });
+  return /* @__PURE__ */ jsx8(ApiProvider, { baseUrl: config.apiBaseUrl, children: /* @__PURE__ */ jsx8(AuthProvider, { children: /* @__PURE__ */ jsx8(ToastProvider, { children: /* @__PURE__ */ jsx8(AdminGate, { children: /* @__PURE__ */ jsx8(AdminShell, { children }) }) }) }) });
 }
 
 // src/components/templates/AdminLayout.jsx
-import { jsx as jsx8, jsxs as jsxs4 } from "react/jsx-runtime";
+import { jsx as jsx9, jsxs as jsxs5 } from "react/jsx-runtime";
 function AdminLayout({ title, formId, buttonLabel = "Save", children }) {
-  return /* @__PURE__ */ jsxs4("div", { className: "flex h-full flex-col", children: [
-    /* @__PURE__ */ jsxs4("header", { className: "sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/80 px-6 py-4 backdrop-blur", children: [
-      /* @__PURE__ */ jsx8("h1", { className: "truncate text-xl font-semibold text-gray-900", children: title }),
-      formId && /* @__PURE__ */ jsx8(
+  return /* @__PURE__ */ jsxs5("div", { className: "flex h-full flex-col", children: [
+    /* @__PURE__ */ jsxs5("header", { className: "sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/80 px-6 py-4 backdrop-blur", children: [
+      /* @__PURE__ */ jsx9("h1", { className: "truncate text-xl font-semibold text-gray-900", children: title }),
+      formId && /* @__PURE__ */ jsx9(
         "button",
         {
           type: "submit",
@@ -349,22 +475,22 @@ function AdminLayout({ title, formId, buttonLabel = "Save", children }) {
         }
       )
     ] }),
-    /* @__PURE__ */ jsx8("main", { className: "flex-1 overflow-auto p-6", children })
+    /* @__PURE__ */ jsx9("main", { className: "flex-1 overflow-auto p-6", children })
   ] });
 }
 
 // src/components/templates/AdminChildrenLayout.jsx
-import { createContext as createContext3, useContext as useContext3, useState as useState5, useEffect as useEffect5 } from "react";
+import { createContext as createContext4, useContext as useContext4, useState as useState6, useEffect as useEffect5 } from "react";
 import Link4 from "next/link";
 import { Plus, Search, X } from "lucide-react";
 
 // src/components/templates/DataTable.jsx
-import { useEffect as useEffect4, useRef, useState as useState4 } from "react";
+import { useEffect as useEffect4, useRef as useRef2, useState as useState5 } from "react";
 import Link3 from "next/link";
 import { Trash2 as Trash22 } from "lucide-react";
 
 // src/components/atoms/Badge.jsx
-import { jsx as jsx9 } from "react/jsx-runtime";
+import { jsx as jsx10 } from "react/jsx-runtime";
 var VARIANT_STYLES = {
   default: "bg-gray-100 text-gray-800",
   primary: "bg-blue-100 text-blue-800",
@@ -384,7 +510,7 @@ var Badge = ({
   value,
   className = ""
 }) => {
-  return /* @__PURE__ */ jsx9(
+  return /* @__PURE__ */ jsx10(
     "span",
     {
       className: `inline-flex items-center rounded-full font-medium ${VARIANT_STYLES[variant]} ${SIZE_STYLES[size]} ${className}`,
@@ -398,7 +524,7 @@ import Link2 from "next/link";
 import { useRouter as useRouter6 } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Eye, Pencil, RotateCw, Trash2 } from "lucide-react";
-import { jsx as jsx10 } from "react/jsx-runtime";
+import { jsx as jsx11 } from "react/jsx-runtime";
 var bare = {
   background: "none",
   border: "none",
@@ -406,10 +532,10 @@ var bare = {
   padding: 0
 };
 function Button({ className, onClick, children }) {
-  return /* @__PURE__ */ jsx10("button", { className: `btn ${className}`, onClick, children });
+  return /* @__PURE__ */ jsx11("button", { className: `btn ${className}`, onClick, children });
 }
 function BlueRedButton({ className, onClick, children }) {
-  return /* @__PURE__ */ jsx10(
+  return /* @__PURE__ */ jsx11(
     "button",
     {
       className: `btn bg-primaryBlue p-2 text-white ${className}`,
@@ -419,37 +545,37 @@ function BlueRedButton({ className, onClick, children }) {
   );
 }
 function EditButton({ onClick }) {
-  return /* @__PURE__ */ jsx10("button", { style: bare, title: "Edit", onClick, children: /* @__PURE__ */ jsx10(Pencil, { size: 16 }) });
+  return /* @__PURE__ */ jsx11("button", { style: bare, title: "Edit", onClick, children: /* @__PURE__ */ jsx11(Pencil, { size: 16 }) });
 }
 function DeleteButton({ onClick }) {
-  return /* @__PURE__ */ jsx10("button", { style: bare, title: "Delete", onClick, children: /* @__PURE__ */ jsx10(Trash2, { size: 16, color: "red" }) });
+  return /* @__PURE__ */ jsx11("button", { style: bare, title: "Delete", onClick, children: /* @__PURE__ */ jsx11(Trash2, { size: 16, color: "red" }) });
 }
 function ViewButton({
   href,
   target = "_blank",
   title = "View in website"
 }) {
-  return /* @__PURE__ */ jsx10(Link2, { href, target, title, children: /* @__PURE__ */ jsx10(Eye, { size: 16 }) });
+  return /* @__PURE__ */ jsx11(Link2, { href, target, title, children: /* @__PURE__ */ jsx11(Eye, { size: 16 }) });
 }
 function ResetButton({ onClick }) {
-  return /* @__PURE__ */ jsx10(
+  return /* @__PURE__ */ jsx11(
     "button",
     {
       style: bare,
       className: "scale-x-[-1]",
       title: "Reset",
       onClick,
-      children: /* @__PURE__ */ jsx10(RotateCw, { size: 16 })
+      children: /* @__PURE__ */ jsx11(RotateCw, { size: 16 })
     }
   );
 }
 function BackButton() {
   const router = useRouter6();
-  return /* @__PURE__ */ jsx10("button", { className: "btn", onClick: () => router.back(), children: /* @__PURE__ */ jsx10(ChevronLeft, { size: 20 }) });
+  return /* @__PURE__ */ jsx11("button", { className: "btn", onClick: () => router.back(), children: /* @__PURE__ */ jsx11(ChevronLeft, { size: 20 }) });
 }
 
 // src/components/organisms/DeleteAction.jsx
-import { jsx as jsx11 } from "react/jsx-runtime";
+import { jsx as jsx12 } from "react/jsx-runtime";
 function DeleteAction({ route, mutate }) {
   const { del } = useApi();
   const handleDelete = async () => {
@@ -458,7 +584,7 @@ function DeleteAction({ route, mutate }) {
     const res = await del(`${route}`, { success: "Successfully deleted" });
     if ((res == null ? void 0 : res.statusCode) == 200) mutate == null ? void 0 : mutate();
   };
-  return /* @__PURE__ */ jsx11(DeleteButton, { onClick: handleDelete });
+  return /* @__PURE__ */ jsx12(DeleteButton, { onClick: handleDelete });
 }
 
 // src/utils/utils.js
@@ -475,9 +601,27 @@ function resolveUrl(media) {
 function capitalise(str) {
   return str.replace(/\b\w/g, (c) => c.toUpperCase());
 }
+var UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function isUuid(val) {
+  return typeof val === "string" && UUID_REGEX.test(val);
+}
+function removeEmptyFields(obj) {
+  const result = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === null || value === void 0) continue;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed === "") continue;
+      result[key] = trimmed;
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
 
 // src/components/templates/DataTable.jsx
-import { Fragment, jsx as jsx12, jsxs as jsxs5 } from "react/jsx-runtime";
+import { Fragment, jsx as jsx13, jsxs as jsxs6 } from "react/jsx-runtime";
 function normalizePayloadResponse(data) {
   if (Array.isArray(data)) {
     return { docs: data, totalDocs: data.length, page: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false };
@@ -508,9 +652,9 @@ function DataTable({
 }) {
   const { name, mutate } = useEntity();
   const { items, total, page, totalPages, hasNextPage, hasPrevPage } = normalizePayloadResponse(data);
-  const [selectedIds, setSelectedIds] = useState4(() => /* @__PURE__ */ new Set());
-  const [isDeleting, setIsDeleting] = useState4(false);
-  const headerCheckboxRef = useRef(null);
+  const [selectedIds, setSelectedIds] = useState5(() => /* @__PURE__ */ new Set());
+  const [isDeleting, setIsDeleting] = useState5(false);
+  const headerCheckboxRef = useRef2(null);
   useEffect4(() => {
     setSelectedIds(/* @__PURE__ */ new Set());
   }, [data]);
@@ -567,7 +711,7 @@ function DataTable({
     const value = item[key];
     switch (type) {
       case "image":
-        return /* @__PURE__ */ jsx12("div", { className: "h-9 w-9 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200", children: /* @__PURE__ */ jsx12(
+        return /* @__PURE__ */ jsx13("div", { className: "h-9 w-9 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200", children: /* @__PURE__ */ jsx13(
           "img",
           {
             src: resolveUrl(value),
@@ -579,18 +723,18 @@ function DataTable({
         const media = typeof value === "object" && value !== null ? value : null;
         const src = (media == null ? void 0 : media.url) ? resolveUrl(media.url) : null;
         if (!src) {
-          return /* @__PURE__ */ jsx12("div", { className: "flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400 ring-1 ring-gray-200", children: "\u2014" });
+          return /* @__PURE__ */ jsx13("div", { className: "flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400 ring-1 ring-gray-200", children: "\u2014" });
         }
-        return /* @__PURE__ */ jsx12("div", { className: "h-9 w-9 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200", children: /* @__PURE__ */ jsx12("img", { src, alt: (media == null ? void 0 : media.alt) ?? field.head, className: "h-full w-full object-cover" }) });
+        return /* @__PURE__ */ jsx13("div", { className: "h-9 w-9 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200", children: /* @__PURE__ */ jsx13("img", { src, alt: (media == null ? void 0 : media.alt) ?? field.head, className: "h-full w-full object-cover" }) });
       }
       case "relationship": {
         const labelKey = rest[0] ?? "name";
         const resolved = resolveRelationValue(value, labelKey);
-        return resolved ? /* @__PURE__ */ jsx12("span", { className: "text-sm text-gray-700", children: resolved.label }) : /* @__PURE__ */ jsx12("span", { className: "text-sm text-gray-400", children: "\u2014" });
+        return resolved ? /* @__PURE__ */ jsx13("span", { className: "text-sm text-gray-700", children: resolved.label }) : /* @__PURE__ */ jsx13("span", { className: "text-sm text-gray-400", children: "\u2014" });
       }
       case "date":
-        if (!value) return /* @__PURE__ */ jsx12("span", { className: "text-sm text-gray-400", children: "\u2014" });
-        return /* @__PURE__ */ jsx12("span", { className: "text-sm text-gray-600", children: new Date(value).toLocaleString("en-US", {
+        if (!value) return /* @__PURE__ */ jsx13("span", { className: "text-sm text-gray-400", children: "\u2014" });
+        return /* @__PURE__ */ jsx13("span", { className: "text-sm text-gray-600", children: new Date(value).toLocaleString("en-US", {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -598,9 +742,9 @@ function DataTable({
           minute: "2-digit"
         }) });
       case "bold":
-        return /* @__PURE__ */ jsx12("span", { className: "text-sm font-semibold text-gray-900", children: value });
+        return /* @__PURE__ */ jsx13("span", { className: "text-sm font-semibold text-gray-900", children: value });
       case "status":
-        return /* @__PURE__ */ jsx12(
+        return /* @__PURE__ */ jsx13(
           Badge,
           {
             value,
@@ -608,31 +752,31 @@ function DataTable({
           }
         );
       default:
-        return /* @__PURE__ */ jsx12("span", { className: "text-sm text-gray-600", title: value, children: value });
+        return /* @__PURE__ */ jsx13("span", { className: "text-sm text-gray-600", title: value, children: value });
     }
   };
-  const defaultActions = (item) => /* @__PURE__ */ jsxs5(Fragment, { children: [
-    editHref && /* @__PURE__ */ jsx12(
+  const defaultActions = (item) => /* @__PURE__ */ jsxs6(Fragment, { children: [
+    editHref && /* @__PURE__ */ jsx13(
       Link3,
       {
         href: typeof editHref === "function" ? editHref(item) : editHref + item.id,
         className: "rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700",
-        children: /* @__PURE__ */ jsx12(EditButton, {})
+        children: /* @__PURE__ */ jsx13(EditButton, {})
       }
     ),
-    /* @__PURE__ */ jsx12(DeleteAction, { route: `/api/${name}/${item.id}`, mutate })
+    /* @__PURE__ */ jsx13(DeleteAction, { route: `/api/${name}/${item.id}`, mutate })
   ] });
   const renderActions = actions ?? defaultActions;
-  return /* @__PURE__ */ jsxs5("div", { className: "flex flex-col gap-3", children: [
-    selectable && selectedCount > 0 && /* @__PURE__ */ jsxs5("div", { className: "flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5", children: [
-      /* @__PURE__ */ jsxs5("span", { className: "text-sm text-gray-600", children: [
-        /* @__PURE__ */ jsx12("span", { className: "font-medium text-gray-900", children: selectedCount }),
+  return /* @__PURE__ */ jsxs6("div", { className: "flex flex-col gap-3", children: [
+    selectable && selectedCount > 0 && /* @__PURE__ */ jsxs6("div", { className: "flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5", children: [
+      /* @__PURE__ */ jsxs6("span", { className: "text-sm text-gray-600", children: [
+        /* @__PURE__ */ jsx13("span", { className: "font-medium text-gray-900", children: selectedCount }),
         " ",
         selectedCount === 1 ? "record" : "records",
         " selected"
       ] }),
-      /* @__PURE__ */ jsxs5("div", { className: "flex items-center gap-3", children: [
-        /* @__PURE__ */ jsx12(
+      /* @__PURE__ */ jsxs6("div", { className: "flex items-center gap-3", children: [
+        /* @__PURE__ */ jsx13(
           "button",
           {
             type: "button",
@@ -641,7 +785,7 @@ function DataTable({
             children: "Clear"
           }
         ),
-        /* @__PURE__ */ jsxs5(
+        /* @__PURE__ */ jsxs6(
           "button",
           {
             type: "button",
@@ -649,16 +793,16 @@ function DataTable({
             disabled: isDeleting,
             className: "flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60",
             children: [
-              /* @__PURE__ */ jsx12(Trash22, { size: 14 }),
+              /* @__PURE__ */ jsx13(Trash22, { size: 14 }),
               isDeleting ? "Deleting\u2026" : "Delete"
             ]
           }
         )
       ] })
     ] }),
-    /* @__PURE__ */ jsx12("div", { className: "overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm", children: /* @__PURE__ */ jsx12("div", { className: "overflow-x-auto", children: /* @__PURE__ */ jsxs5("table", { className: "w-full border-collapse text-left", children: [
-      /* @__PURE__ */ jsx12("thead", { children: /* @__PURE__ */ jsxs5("tr", { className: "border-b border-gray-200 bg-gray-50", children: [
-        selectable && /* @__PURE__ */ jsx12("th", { className: "w-10 ", children: /* @__PURE__ */ jsx12(
+    /* @__PURE__ */ jsx13("div", { className: "overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm", children: /* @__PURE__ */ jsx13("div", { className: "overflow-x-auto", children: /* @__PURE__ */ jsxs6("table", { className: "w-full border-collapse text-left", children: [
+      /* @__PURE__ */ jsx13("thead", { children: /* @__PURE__ */ jsxs6("tr", { className: "border-b border-gray-200 bg-gray-50", children: [
+        selectable && /* @__PURE__ */ jsx13("th", { className: "w-10 ", children: /* @__PURE__ */ jsx13(
           "input",
           {
             ref: headerCheckboxRef,
@@ -670,7 +814,7 @@ function DataTable({
             "aria-label": "Select all rows on this page"
           }
         ) }),
-        fields.map((field, i) => /* @__PURE__ */ jsx12(
+        fields.map((field, i) => /* @__PURE__ */ jsx13(
           "th",
           {
             className: "whitespace-nowrap  text-xs font-medium uppercase tracking-wide text-gray-500",
@@ -678,17 +822,17 @@ function DataTable({
           },
           i
         )),
-        renderActions && /* @__PURE__ */ jsx12("th", { className: "whitespace-nowrap  text-right text-xs font-medium uppercase tracking-wide text-gray-500", children: "Action" })
+        renderActions && /* @__PURE__ */ jsx13("th", { className: "whitespace-nowrap  text-right text-xs font-medium uppercase tracking-wide text-gray-500", children: "Action" })
       ] }) }),
-      /* @__PURE__ */ jsxs5("tbody", { className: "divide-y divide-gray-100", children: [
+      /* @__PURE__ */ jsxs6("tbody", { className: "divide-y divide-gray-100", children: [
         items.map((item, index) => {
           const isSelected = selectedIds.has(item.id);
-          return /* @__PURE__ */ jsxs5(
+          return /* @__PURE__ */ jsxs6(
             "tr",
             {
               className: `transition-colors hover:bg-gray-50 ${isSelected ? "bg-gray-50" : ""}`,
               children: [
-                selectable && /* @__PURE__ */ jsx12("td", { className: " align-middle", children: /* @__PURE__ */ jsx12(
+                selectable && /* @__PURE__ */ jsx13("td", { className: " align-middle", children: /* @__PURE__ */ jsx13(
                   "input",
                   {
                     type: "checkbox",
@@ -698,14 +842,14 @@ function DataTable({
                     "aria-label": "Select row"
                   }
                 ) }),
-                fields.map((field, i) => /* @__PURE__ */ jsx12("td", { className: "whitespace-nowrap px-4 py-3 align-middle", children: renderCell(item, field) }, i)),
-                renderActions && /* @__PURE__ */ jsx12("td", { className: " align-middle", children: /* @__PURE__ */ jsx12("div", { className: "flex items-center justify-end gap-1", children: renderActions(item) }) })
+                fields.map((field, i) => /* @__PURE__ */ jsx13("td", { className: "whitespace-nowrap px-4 py-3 align-middle", children: renderCell(item, field) }, i)),
+                renderActions && /* @__PURE__ */ jsx13("td", { className: " align-middle", children: /* @__PURE__ */ jsx13("div", { className: "flex items-center justify-end gap-1", children: renderActions(item) }) })
               ]
             },
             item.id ?? index
           );
         }),
-        items.length === 0 && /* @__PURE__ */ jsx12("tr", { children: /* @__PURE__ */ jsx12(
+        items.length === 0 && /* @__PURE__ */ jsx13("tr", { children: /* @__PURE__ */ jsx13(
           "td",
           {
             colSpan: (selectable ? 1 : 0) + fields.length + (renderActions ? 1 : 0),
@@ -715,22 +859,22 @@ function DataTable({
         ) })
       ] })
     ] }) }) }),
-    onPageChange && totalPages > 1 && /* @__PURE__ */ jsxs5("div", { className: "flex items-center justify-between text-sm", children: [
-      /* @__PURE__ */ jsxs5("span", { className: "text-gray-500", children: [
+    onPageChange && totalPages > 1 && /* @__PURE__ */ jsxs6("div", { className: "flex items-center justify-between text-sm", children: [
+      /* @__PURE__ */ jsxs6("span", { className: "text-gray-500", children: [
         "Page ",
-        /* @__PURE__ */ jsx12("span", { className: "font-medium text-gray-700", children: page }),
+        /* @__PURE__ */ jsx13("span", { className: "font-medium text-gray-700", children: page }),
         " of",
         " ",
-        /* @__PURE__ */ jsx12("span", { className: "font-medium text-gray-700", children: totalPages }),
+        /* @__PURE__ */ jsx13("span", { className: "font-medium text-gray-700", children: totalPages }),
         " ",
-        /* @__PURE__ */ jsxs5("span", { className: "text-gray-400", children: [
+        /* @__PURE__ */ jsxs6("span", { className: "text-gray-400", children: [
           "(",
           total,
           " total)"
         ] })
       ] }),
-      /* @__PURE__ */ jsxs5("div", { className: "flex gap-2", children: [
-        /* @__PURE__ */ jsx12(
+      /* @__PURE__ */ jsxs6("div", { className: "flex gap-2", children: [
+        /* @__PURE__ */ jsx13(
           "button",
           {
             type: "button",
@@ -740,7 +884,7 @@ function DataTable({
             children: "Previous"
           }
         ),
-        /* @__PURE__ */ jsx12(
+        /* @__PURE__ */ jsx13(
           "button",
           {
             type: "button",
@@ -765,9 +909,9 @@ function useFetchEntity(name, params) {
 }
 
 // src/components/templates/AdminChildrenLayout.jsx
-import { jsx as jsx13, jsxs as jsxs6 } from "react/jsx-runtime";
-var EntityContext = createContext3({});
-var useEntity = () => useContext3(EntityContext);
+import { jsx as jsx14, jsxs as jsxs7 } from "react/jsx-runtime";
+var EntityContext = createContext4({});
+var useEntity = () => useContext4(EntityContext);
 function AdminChildrenLayout({
   name,
   tablefields,
@@ -777,11 +921,11 @@ function AdminChildrenLayout({
   const entities = getEntities();
   const entityConfig = entities[name];
   const filterConfig = (entityConfig == null ? void 0 : entityConfig.filters) || [];
-  const [page, setPage] = useState5(1);
-  const [limit, setLimit] = useState5(10);
-  const [search, setSearch] = useState5("");
-  const [debouncedSearch, setDebouncedSearch] = useState5("");
-  const [activeFilters, setActiveFilters] = useState5({});
+  const [page, setPage] = useState6(1);
+  const [limit, setLimit] = useState6(10);
+  const [search, setSearch] = useState6("");
+  const [debouncedSearch, setDebouncedSearch] = useState6("");
+  const [activeFilters, setActiveFilters] = useState6({});
   useEffect5(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -821,33 +965,33 @@ function AdminChildrenLayout({
     setPage(1);
   };
   const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
-  return /* @__PURE__ */ jsx13(EntityContext, { value, children: /* @__PURE__ */ jsxs6("div", { className: "flex flex-col gap-5", children: [
-    /* @__PURE__ */ jsxs6("div", { className: "flex items-center justify-between rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm", children: [
-      /* @__PURE__ */ jsxs6("div", { children: [
-        /* @__PURE__ */ jsx13("h2", { className: "text-lg font-semibold text-gray-900", children: capitalise(name) }),
-        typeof ((_a = entity == null ? void 0 : entity.data) == null ? void 0 : _a.totalDocs) === "number" && /* @__PURE__ */ jsxs6("p", { className: "text-sm text-gray-500", children: [
+  return /* @__PURE__ */ jsx14(EntityContext, { value, children: /* @__PURE__ */ jsxs7("div", { className: "flex flex-col gap-5", children: [
+    /* @__PURE__ */ jsxs7("div", { className: "flex items-center justify-between rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm", children: [
+      /* @__PURE__ */ jsxs7("div", { children: [
+        /* @__PURE__ */ jsx14("h2", { className: "text-lg font-semibold text-gray-900", children: capitalise(name) }),
+        typeof ((_a = entity == null ? void 0 : entity.data) == null ? void 0 : _a.totalDocs) === "number" && /* @__PURE__ */ jsxs7("p", { className: "text-sm text-gray-500", children: [
           entity.data.totalDocs,
           " total"
         ] })
       ] }),
-      /* @__PURE__ */ jsxs6(
+      /* @__PURE__ */ jsxs7(
         Link4,
         {
           href: `/admin/${name}/new`,
           className: "flex items-center gap-1.5 rounded-md bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800",
           children: [
-            /* @__PURE__ */ jsx13(Plus, { size: 16 }),
+            /* @__PURE__ */ jsx14(Plus, { size: 16 }),
             "New ",
             capitalise(name)
           ]
         }
       )
     ] }),
-    /* @__PURE__ */ jsxs6("div", { className: "flex flex-wrap items-center justify-between gap-4", children: [
-      /* @__PURE__ */ jsxs6("div", { className: "flex flex-wrap items-center gap-3", children: [
-        /* @__PURE__ */ jsxs6("div", { className: "relative", children: [
-          /* @__PURE__ */ jsx13("div", { className: "pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400", children: /* @__PURE__ */ jsx13(Search, { size: 16 }) }),
-          /* @__PURE__ */ jsx13(
+    /* @__PURE__ */ jsxs7("div", { className: "flex flex-wrap items-center justify-between gap-4", children: [
+      /* @__PURE__ */ jsxs7("div", { className: "flex flex-wrap items-center gap-3", children: [
+        /* @__PURE__ */ jsxs7("div", { className: "relative", children: [
+          /* @__PURE__ */ jsx14("div", { className: "pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400", children: /* @__PURE__ */ jsx14(Search, { size: 16 }) }),
+          /* @__PURE__ */ jsx14(
             "input",
             {
               type: "text",
@@ -858,41 +1002,41 @@ function AdminChildrenLayout({
             }
           )
         ] }),
-        filterConfig.map((filter) => /* @__PURE__ */ jsxs6(
+        filterConfig.map((filter) => /* @__PURE__ */ jsxs7(
           "select",
           {
             value: activeFilters[filter.field] || "",
             onChange: (e) => handleFilterChange(filter.field, e.target.value),
             className: "rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm font-medium text-gray-700 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900",
             children: [
-              /* @__PURE__ */ jsxs6("option", { value: "", children: [
+              /* @__PURE__ */ jsxs7("option", { value: "", children: [
                 "All ",
                 filter.label
               ] }),
               filter.options.map((opt) => {
                 const val = typeof opt === "string" ? opt : opt.value;
                 const label = typeof opt === "string" ? opt : opt.label;
-                return /* @__PURE__ */ jsx13("option", { value: val, children: label }, val);
+                return /* @__PURE__ */ jsx14("option", { value: val, children: label }, val);
               })
             ]
           },
           filter.field
         )),
-        activeFilterCount > 0 && /* @__PURE__ */ jsxs6(
+        activeFilterCount > 0 && /* @__PURE__ */ jsxs7(
           "button",
           {
             onClick: clearAllFilters,
             className: "flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900",
             children: [
-              /* @__PURE__ */ jsx13(X, { size: 14 }),
+              /* @__PURE__ */ jsx14(X, { size: 14 }),
               "Clear filters"
             ]
           }
         )
       ] }),
-      /* @__PURE__ */ jsxs6("div", { className: "flex items-center gap-2 ml-auto", children: [
-        /* @__PURE__ */ jsx13("label", { htmlFor: "limit-select", className: "text-sm text-gray-600 whitespace-nowrap", children: "Items per page:" }),
-        /* @__PURE__ */ jsxs6(
+      /* @__PURE__ */ jsxs7("div", { className: "flex items-center gap-2 ml-auto", children: [
+        /* @__PURE__ */ jsx14("label", { htmlFor: "limit-select", className: "text-sm text-gray-600 whitespace-nowrap", children: "Items per page:" }),
+        /* @__PURE__ */ jsxs7(
           "select",
           {
             id: "limit-select",
@@ -900,16 +1044,16 @@ function AdminChildrenLayout({
             onChange: handleLimitChange,
             className: "rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm font-medium text-gray-700 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900",
             children: [
-              /* @__PURE__ */ jsx13("option", { value: 10, children: "10" }),
-              /* @__PURE__ */ jsx13("option", { value: 20, children: "20" }),
-              /* @__PURE__ */ jsx13("option", { value: 50, children: "50" }),
-              /* @__PURE__ */ jsx13("option", { value: 100, children: "100" })
+              /* @__PURE__ */ jsx14("option", { value: 10, children: "10" }),
+              /* @__PURE__ */ jsx14("option", { value: 20, children: "20" }),
+              /* @__PURE__ */ jsx14("option", { value: 50, children: "50" }),
+              /* @__PURE__ */ jsx14("option", { value: 100, children: "100" })
             ]
           }
         )
       ] })
     ] }),
-    /* @__PURE__ */ jsx13(
+    /* @__PURE__ */ jsx14(
       DataTable,
       {
         data: entity.data,
@@ -956,20 +1100,20 @@ var allowed = (roles) => ({ req: { user } }) => {
 };
 
 // src/components/templates/ImageUploader.jsx
-import { useEffect as useEffect8, useState as useState7 } from "react";
+import { useEffect as useEffect8, useState as useState8 } from "react";
 
 // src/components/organisms/MediaLibraryModal.jsx
-import { useEffect as useEffect7, useRef as useRef3, useState as useState6 } from "react";
+import { useEffect as useEffect7, useRef as useRef4, useState as useState7 } from "react";
 import Image from "next/image";
 import { ImageIcon, Loader2, Upload, X as X2 } from "lucide-react";
 
 // src/components/atoms/Input.jsx
-import { useContext as useContext5, useRef as useRef2 } from "react";
+import { useContext as useContext6, useRef as useRef3 } from "react";
 
 // src/components/molecules/Form.jsx
-import { createContext as createContext4, useContext as useContext4 } from "react";
-import { jsx as jsx14 } from "react/jsx-runtime";
-var DefaultsContext = createContext4(null);
+import { createContext as createContext5, useContext as useContext5 } from "react";
+import { jsx as jsx15 } from "react/jsx-runtime";
+var DefaultsContext = createContext5(null);
 function Form({ children, onSubmit, className, defaults = {}, ...rest }) {
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -977,16 +1121,16 @@ function Form({ children, onSubmit, className, defaults = {}, ...rest }) {
     const values = Object.fromEntries(formData.entries());
     onSubmit(values);
   };
-  return /* @__PURE__ */ jsx14(DefaultsContext.Provider, { value: defaults, children: /* @__PURE__ */ jsx14("form", { onSubmit: handleSubmit, className: `${className} admin-form`, ...rest, children }) });
+  return /* @__PURE__ */ jsx15(DefaultsContext.Provider, { value: defaults, children: /* @__PURE__ */ jsx15("form", { onSubmit: handleSubmit, className: `${className} admin-form`, ...rest, children }) });
 }
 
 // src/components/atoms/Input.jsx
-import { jsx as jsx15, jsxs as jsxs7 } from "react/jsx-runtime";
+import { jsx as jsx16, jsxs as jsxs8 } from "react/jsx-runtime";
 function humanize(name = "") {
   return name.replace(/_/g, " ").replace(/-/g, " ").replace(/([a-z0-9])([A-Z])/g, "$1 $2").trim().replace(/\s+/g, " ").split(" ").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
 function useResolvedDefault(name, rest) {
-  const contextDefaults = useContext5(DefaultsContext);
+  const contextDefaults = useContext6(DefaultsContext);
   const isControlled = "value" in rest;
   const resolvedDefaultValue = "defaultValue" in rest ? rest.defaultValue : contextDefaults == null ? void 0 : contextDefaults[name];
   return isControlled ? {} : { defaultValue: resolvedDefaultValue };
@@ -1003,18 +1147,18 @@ function Input({
 }) {
   const defaultProps2 = useResolvedDefault(name, rest);
   const resolvedPlaceholder = placeholder ?? humanize(name);
-  const inputRef = useRef2(null);
-  return /* @__PURE__ */ jsxs7(
+  const inputRef = useRef3(null);
+  return /* @__PURE__ */ jsxs8(
     "div",
     {
       className: `flex w-full flex-col gap-1.5 border-black ${className || ""}`,
       style: { display: hidden ? "none" : "flex", ...style },
       children: [
-        resolvedPlaceholder && /* @__PURE__ */ jsxs7("label", { htmlFor: name, className: "text-sm font-medium text-gray-700", children: [
+        resolvedPlaceholder && /* @__PURE__ */ jsxs8("label", { htmlFor: name, className: "text-sm font-medium text-gray-700", children: [
           resolvedPlaceholder,
-          required && /* @__PURE__ */ jsx15("span", { className: "ml-1 text-red-500", children: "*" })
+          required && /* @__PURE__ */ jsx16("span", { className: "ml-1 text-red-500", children: "*" })
         ] }),
-        /* @__PURE__ */ jsx15(
+        /* @__PURE__ */ jsx16(
           "input",
           {
             ref: inputRef,
@@ -1034,13 +1178,13 @@ function Select({ placeholder, children, className, name, required, ...rest }) {
   const defaultProps2 = useResolvedDefault(name, rest);
   const resolvedPlaceholder = placeholder ?? humanize(name);
   const safeProps = rest.value === null ? { ...rest, value: "" } : rest;
-  const selectRef = useRef2(null);
-  return /* @__PURE__ */ jsxs7("div", { className: `flex w-full flex-col gap-1.5 ${className || ""}`, children: [
-    resolvedPlaceholder && /* @__PURE__ */ jsxs7("label", { htmlFor: name, className: "text-sm font-medium text-gray-700", children: [
+  const selectRef = useRef3(null);
+  return /* @__PURE__ */ jsxs8("div", { className: `flex w-full flex-col gap-1.5 ${className || ""}`, children: [
+    resolvedPlaceholder && /* @__PURE__ */ jsxs8("label", { htmlFor: name, className: "text-sm font-medium text-gray-700", children: [
       resolvedPlaceholder,
-      required && /* @__PURE__ */ jsx15("span", { className: "ml-1 text-red-500", children: "*" })
+      required && /* @__PURE__ */ jsx16("span", { className: "ml-1 text-red-500", children: "*" })
     ] }),
-    /* @__PURE__ */ jsx15(
+    /* @__PURE__ */ jsx16(
       "select",
       {
         ref: selectRef,
@@ -1057,13 +1201,13 @@ function Select({ placeholder, children, className, name, required, ...rest }) {
 function Textarea({ placeholder, className, name, required, ...rest }) {
   const defaultProps2 = useResolvedDefault(name, rest);
   const resolvedPlaceholder = placeholder ?? humanize(name);
-  const textareaRef = useRef2(null);
-  return /* @__PURE__ */ jsxs7("div", { className: `flex w-full flex-col gap-1.5 ${className || ""}`, children: [
-    resolvedPlaceholder && /* @__PURE__ */ jsxs7("label", { htmlFor: name, className: "text-sm font-medium text-gray-700", children: [
+  const textareaRef = useRef3(null);
+  return /* @__PURE__ */ jsxs8("div", { className: `flex w-full flex-col gap-1.5 ${className || ""}`, children: [
+    resolvedPlaceholder && /* @__PURE__ */ jsxs8("label", { htmlFor: name, className: "text-sm font-medium text-gray-700", children: [
       resolvedPlaceholder,
-      required && /* @__PURE__ */ jsx15("span", { className: "ml-1 text-red-500", children: "*" })
+      required && /* @__PURE__ */ jsx16("span", { className: "ml-1 text-red-500", children: "*" })
     ] }),
-    /* @__PURE__ */ jsx15(
+    /* @__PURE__ */ jsx16(
       "textarea",
       {
         ref: textareaRef,
@@ -1078,7 +1222,7 @@ function Textarea({ placeholder, className, name, required, ...rest }) {
 }
 function NumberSelector({ name, range, numbers, ...rest }) {
   const values = numbers ?? buildRange(range);
-  return /* @__PURE__ */ jsx15(Select, { name, ...rest, children: values.map((n) => /* @__PURE__ */ jsx15("option", { value: n, children: n }, n)) });
+  return /* @__PURE__ */ jsx16(Select, { name, ...rest, children: values.map((n) => /* @__PURE__ */ jsx16("option", { value: n, children: n }, n)) });
 }
 function buildRange([start = 0, end = 9, step = 1] = []) {
   const result = [];
@@ -1098,8 +1242,8 @@ function RateInput({
   style,
   inputClassname
 }) {
-  return /* @__PURE__ */ jsxs7("div", { className: "custom-input flex-1 flex-col", children: [
-    /* @__PURE__ */ jsx15(
+  return /* @__PURE__ */ jsxs8("div", { className: "custom-input flex-1 flex-col", children: [
+    /* @__PURE__ */ jsx16(
       "span",
       {
         className: "font-semibold",
@@ -1110,7 +1254,7 @@ function RateInput({
         children: tag + (required ? "*" : "")
       }
     ),
-    /* @__PURE__ */ jsx15(
+    /* @__PURE__ */ jsx16(
       "input",
       {
         type,
@@ -1127,8 +1271,8 @@ function RateInput({
   ] });
 }
 function RateDisplay({ required = false, value, tag, style }) {
-  return /* @__PURE__ */ jsxs7("div", { className: "flex-1 flex-col", children: [
-    /* @__PURE__ */ jsx15(
+  return /* @__PURE__ */ jsxs8("div", { className: "flex-1 flex-col", children: [
+    /* @__PURE__ */ jsx16(
       "span",
       {
         className: "font-source-serif",
@@ -1139,7 +1283,7 @@ function RateDisplay({ required = false, value, tag, style }) {
         children: tag + (required ? "*" : "")
       }
     ),
-    /* @__PURE__ */ jsx15(
+    /* @__PURE__ */ jsx16(
       "div",
       {
         className: "rate-input",
@@ -1156,19 +1300,19 @@ function RateDisplay({ required = false, value, tag, style }) {
 }
 
 // src/components/organisms/MediaLibraryModal.jsx
-import { Fragment as Fragment2, jsx as jsx16, jsxs as jsxs8 } from "react/jsx-runtime";
+import { Fragment as Fragment2, jsx as jsx17, jsxs as jsxs9 } from "react/jsx-runtime";
 function formatCategoryLabel(key) {
   return key.split("_").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
 function MediaLibraryModal({ onClose, onSelect, name }) {
-  const [activeTab, setActiveTab] = useState6("browse");
+  const [activeTab, setActiveTab] = useState7("browse");
   const { data, isLoading, mutate } = useGet(getMediaRoute());
   const { post, del } = useApi();
-  const [uploading, setUploading] = useState6(false);
-  const [deletingId, setDeletingId] = useState6(null);
-  const [previewUrl, setPreviewUrl] = useState6(null);
-  const fileInputRef = useRef3(null);
-  const uploadFieldsRef = useRef3(null);
+  const [uploading, setUploading] = useState7(false);
+  const [deletingId, setDeletingId] = useState7(null);
+  const [previewUrl, setPreviewUrl] = useState7(null);
+  const fileInputRef = useRef4(null);
+  const uploadFieldsRef = useRef4(null);
   const items = Object.fromEntries(
     Object.entries(data ?? {}).filter(([, val]) => Array.isArray(val))
   );
@@ -1225,13 +1369,13 @@ function MediaLibraryModal({ onClose, onSelect, name }) {
     setDeletingId(null);
     mutate();
   };
-  return /* @__PURE__ */ jsx16("div", { className: "media-library-overlay", onClick: onClose, children: /* @__PURE__ */ jsxs8("div", { className: "media-library-modal", onClick: (e) => e.stopPropagation(), children: [
-    /* @__PURE__ */ jsxs8("div", { className: "media-library-header", children: [
-      /* @__PURE__ */ jsx16("h3", { children: "Media Library" }),
-      /* @__PURE__ */ jsx16("button", { type: "button", className: "media-library-close-btn", onClick: onClose, title: "Close", children: /* @__PURE__ */ jsx16(X2, { size: 18 }) })
+  return /* @__PURE__ */ jsx17("div", { className: "media-library-overlay", onClick: onClose, children: /* @__PURE__ */ jsxs9("div", { className: "media-library-modal", onClick: (e) => e.stopPropagation(), children: [
+    /* @__PURE__ */ jsxs9("div", { className: "media-library-header", children: [
+      /* @__PURE__ */ jsx17("h3", { children: "Media Library" }),
+      /* @__PURE__ */ jsx17("button", { type: "button", className: "media-library-close-btn", onClick: onClose, title: "Close", children: /* @__PURE__ */ jsx17(X2, { size: 18 }) })
     ] }),
-    /* @__PURE__ */ jsxs8("div", { className: "media-library-tabs", role: "tablist", children: [
-      /* @__PURE__ */ jsxs8(
+    /* @__PURE__ */ jsxs9("div", { className: "media-library-tabs", role: "tablist", children: [
+      /* @__PURE__ */ jsxs9(
         "button",
         {
           type: "button",
@@ -1240,12 +1384,12 @@ function MediaLibraryModal({ onClose, onSelect, name }) {
           className: `media-library-tab${activeTab === "browse" ? "media-library-tab--active" : ""}`,
           onClick: () => setActiveTab("browse"),
           children: [
-            /* @__PURE__ */ jsx16(ImageIcon, { size: 15 }),
-            /* @__PURE__ */ jsx16("span", { children: "Browse" })
+            /* @__PURE__ */ jsx17(ImageIcon, { size: 15 }),
+            /* @__PURE__ */ jsx17("span", { children: "Browse" })
           ]
         }
       ),
-      /* @__PURE__ */ jsxs8(
+      /* @__PURE__ */ jsxs9(
         "button",
         {
           type: "button",
@@ -1254,25 +1398,25 @@ function MediaLibraryModal({ onClose, onSelect, name }) {
           className: `media-library-tab${activeTab === "upload" ? "media-library-tab--active" : ""}`,
           onClick: () => setActiveTab("upload"),
           children: [
-            /* @__PURE__ */ jsx16(Upload, { size: 15 }),
-            /* @__PURE__ */ jsx16("span", { children: "Upload" })
+            /* @__PURE__ */ jsx17(Upload, { size: 15 }),
+            /* @__PURE__ */ jsx17("span", { children: "Upload" })
           ]
         }
       )
     ] }),
-    activeTab === "browse" ? isLoading ? /* @__PURE__ */ jsxs8("div", { className: "media-library-loading", children: [
-      /* @__PURE__ */ jsx16(Loader2, { size: 20, className: "media-library-spin" }),
-      /* @__PURE__ */ jsx16("span", { children: "Loading media\u2026" })
-    ] }) : Object.keys(items).length === 0 ? /* @__PURE__ */ jsx16("p", { className: "media-library-empty", children: "No images uploaded yet." }) : /* @__PURE__ */ jsx16("div", { className: "media-library-categories", children: Object.entries(items).map(([key, val]) => /* @__PURE__ */ jsxs8("div", { className: "media-library-category-section", children: [
-      /* @__PURE__ */ jsx16("h4", { className: "media-library-category-heading", children: formatCategoryLabel(key) }),
-      !val || val.length === 0 ? /* @__PURE__ */ jsx16("p", { className: "media-library-empty", children: "No images in this category yet." }) : /* @__PURE__ */ jsx16("div", { className: "media-library-grid", children: val.filter((item) => item.url).map((item, n) => /* @__PURE__ */ jsxs8(
+    activeTab === "browse" ? isLoading ? /* @__PURE__ */ jsxs9("div", { className: "media-library-loading", children: [
+      /* @__PURE__ */ jsx17(Loader2, { size: 20, className: "media-library-spin" }),
+      /* @__PURE__ */ jsx17("span", { children: "Loading media\u2026" })
+    ] }) : Object.keys(items).length === 0 ? /* @__PURE__ */ jsx17("p", { className: "media-library-empty", children: "No images uploaded yet." }) : /* @__PURE__ */ jsx17("div", { className: "media-library-categories", children: Object.entries(items).map(([key, val]) => /* @__PURE__ */ jsxs9("div", { className: "media-library-category-section", children: [
+      /* @__PURE__ */ jsx17("h4", { className: "media-library-category-heading", children: formatCategoryLabel(key) }),
+      !val || val.length === 0 ? /* @__PURE__ */ jsx17("p", { className: "media-library-empty", children: "No images in this category yet." }) : /* @__PURE__ */ jsx17("div", { className: "media-library-grid", children: val.filter((item) => item.url).map((item, n) => /* @__PURE__ */ jsxs9(
         "div",
         {
           className: "media-library-item",
           onClick: () => onSelect(item),
           title: item.filename,
           children: [
-            /* @__PURE__ */ jsx16(
+            /* @__PURE__ */ jsx17(
               Image,
               {
                 src: resolveUrl(item.url),
@@ -1281,7 +1425,7 @@ function MediaLibraryModal({ onClose, onSelect, name }) {
                 fill: true
               }
             ),
-            /* @__PURE__ */ jsx16(
+            /* @__PURE__ */ jsx17(
               "button",
               {
                 type: "button",
@@ -1289,28 +1433,28 @@ function MediaLibraryModal({ onClose, onSelect, name }) {
                 onClick: (e) => handleDelete(e, item.id),
                 title: "Delete image",
                 disabled: deletingId === item.id,
-                children: deletingId === item.id ? /* @__PURE__ */ jsx16(Loader2, { size: 14, className: "media-library-spin" }) : /* @__PURE__ */ jsx16(X2, { size: 14 })
+                children: deletingId === item.id ? /* @__PURE__ */ jsx17(Loader2, { size: 14, className: "media-library-spin" }) : /* @__PURE__ */ jsx17(X2, { size: 14 })
               }
             )
           ]
         },
         `${key}-${n}`
       )) })
-    ] }, key)) }) : /* @__PURE__ */ jsxs8(
+    ] }, key)) }) : /* @__PURE__ */ jsxs9(
       "div",
       {
         className: `gap-sm flex-col media-library-upload-form${uploading ? "media-library-upload-form--busy" : ""}`,
         children: [
-          /* @__PURE__ */ jsxs8(
+          /* @__PURE__ */ jsxs9(
             "label",
             {
               className: `relative flex h-[200px] w-full cursor-pointer flex-col items-center justify-center gap-1.5 overflow-hidden rounded-lg border-2 border-dashed border-gray-300 ${uploading ? "cursor-default opacity-70" : ""} ${previewUrl ? "border-solid p-0" : ""}`,
               children: [
-                uploading ? /* @__PURE__ */ jsxs8(Fragment2, { children: [
-                  /* @__PURE__ */ jsx16(Loader2, { size: 28, className: "animate-spin" }),
-                  /* @__PURE__ */ jsx16("span", { children: "Uploading\u2026" })
-                ] }) : previewUrl ? /* @__PURE__ */ jsxs8(Fragment2, { children: [
-                  /* @__PURE__ */ jsx16(
+                uploading ? /* @__PURE__ */ jsxs9(Fragment2, { children: [
+                  /* @__PURE__ */ jsx17(Loader2, { size: 28, className: "animate-spin" }),
+                  /* @__PURE__ */ jsx17("span", { children: "Uploading\u2026" })
+                ] }) : previewUrl ? /* @__PURE__ */ jsxs9(Fragment2, { children: [
+                  /* @__PURE__ */ jsx17(
                     "img",
                     {
                       src: previewUrl,
@@ -1318,7 +1462,7 @@ function MediaLibraryModal({ onClose, onSelect, name }) {
                       className: "absolute inset-0 h-full w-full object-contain"
                     }
                   ),
-                  /* @__PURE__ */ jsx16(
+                  /* @__PURE__ */ jsx17(
                     "button",
                     {
                       type: "button",
@@ -1328,15 +1472,15 @@ function MediaLibraryModal({ onClose, onSelect, name }) {
                         resetUploadTab();
                       },
                       title: "Remove selected image",
-                      children: /* @__PURE__ */ jsx16(X2, { size: 14 })
+                      children: /* @__PURE__ */ jsx17(X2, { size: 14 })
                     }
                   )
-                ] }) : /* @__PURE__ */ jsxs8(Fragment2, { children: [
-                  /* @__PURE__ */ jsx16(Upload, { size: 28 }),
-                  /* @__PURE__ */ jsx16("span", { children: "Click to choose an image" }),
-                  /* @__PURE__ */ jsx16("span", { className: "text-xs text-gray-500", children: "PNG, JPG, WEBP up to 10MB" })
+                ] }) : /* @__PURE__ */ jsxs9(Fragment2, { children: [
+                  /* @__PURE__ */ jsx17(Upload, { size: 28 }),
+                  /* @__PURE__ */ jsx17("span", { children: "Click to choose an image" }),
+                  /* @__PURE__ */ jsx17("span", { className: "text-xs text-gray-500", children: "PNG, JPG, WEBP up to 10MB" })
                 ] }),
-                /* @__PURE__ */ jsx16(
+                /* @__PURE__ */ jsx17(
                   "input",
                   {
                     ref: fileInputRef,
@@ -1350,11 +1494,11 @@ function MediaLibraryModal({ onClose, onSelect, name }) {
               ]
             }
           ),
-          /* @__PURE__ */ jsxs8("div", { ref: uploadFieldsRef, children: [
-            /* @__PURE__ */ jsx16(Input, { name: "alt_text", placeholder: "Alt text", disabled: uploading }),
-            /* @__PURE__ */ jsx16(Input, { name: "title", placeholder: "Title", disabled: uploading })
+          /* @__PURE__ */ jsxs9("div", { ref: uploadFieldsRef, children: [
+            /* @__PURE__ */ jsx17(Input, { name: "alt_text", placeholder: "Alt text", disabled: uploading }),
+            /* @__PURE__ */ jsx17(Input, { name: "title", placeholder: "Title", disabled: uploading })
           ] }),
-          /* @__PURE__ */ jsx16(
+          /* @__PURE__ */ jsx17(
             "button",
             {
               type: "button",
@@ -1371,7 +1515,7 @@ function MediaLibraryModal({ onClose, onSelect, name }) {
 }
 
 // src/components/templates/ImageUploader.jsx
-import { jsx as jsx17, jsxs as jsxs9 } from "react/jsx-runtime";
+import { jsx as jsx18, jsxs as jsxs10 } from "react/jsx-runtime";
 function ImageUploader({
   name,
   altname,
@@ -1384,11 +1528,11 @@ function ImageUploader({
   defaultCover = null
 }) {
   var _a, _b;
-  const [coverPreview, setCoverPreview] = useState7(defaultCover);
-  const [selectedMediaId, setSelectedMediaId] = useState7(null);
-  const [modalOpen, setModalOpen] = useState7(false);
-  const [alt, setAlt] = useState7("");
-  const [title, setTitle] = useState7("");
+  const [coverPreview, setCoverPreview] = useState8(defaultCover);
+  const [selectedMediaId, setSelectedMediaId] = useState8(null);
+  const [modalOpen, setModalOpen] = useState8(false);
+  const [alt, setAlt] = useState8("");
+  const [title, setTitle] = useState8("");
   useEffect8(() => {
     setCoverPreview(defaultCover);
   }, [defaultCover]);
@@ -1410,10 +1554,10 @@ function ImageUploader({
     setCoverPreview(null);
     setSelectedMediaId(null);
   };
-  return /* @__PURE__ */ jsxs9("div", { className: "cover-image-uploader", children: [
-    /* @__PURE__ */ jsx17("label", { className: "cover-image-label", children: caption }),
-    coverPreview ? /* @__PURE__ */ jsxs9("div", { className: "cover-preview-wrapper", children: [
-      /* @__PURE__ */ jsx17(
+  return /* @__PURE__ */ jsxs10("div", { className: "cover-image-uploader", children: [
+    /* @__PURE__ */ jsx18("label", { className: "cover-image-label", children: caption }),
+    coverPreview ? /* @__PURE__ */ jsxs10("div", { className: "cover-preview-wrapper", children: [
+      /* @__PURE__ */ jsx18(
         "img",
         {
           src: resolveUrl(coverPreview),
@@ -1423,7 +1567,7 @@ function ImageUploader({
           onClick: () => setModalOpen(true)
         }
       ),
-      /* @__PURE__ */ jsx17(
+      /* @__PURE__ */ jsx18(
         "button",
         {
           type: "button",
@@ -1433,8 +1577,8 @@ function ImageUploader({
           children: "\u2715"
         }
       )
-    ] }) : /* @__PURE__ */ jsxs9("button", { type: "button", className: "cover-dropzone", onClick: () => setModalOpen(true), children: [
-      /* @__PURE__ */ jsxs9(
+    ] }) : /* @__PURE__ */ jsxs10("button", { type: "button", className: "cover-dropzone", onClick: () => setModalOpen(true), children: [
+      /* @__PURE__ */ jsxs10(
         "svg",
         {
           xmlns: "http://www.w3.org/2000/svg",
@@ -1447,18 +1591,18 @@ function ImageUploader({
           strokeLinecap: "round",
           strokeLinejoin: "round",
           children: [
-            /* @__PURE__ */ jsx17("rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }),
-            /* @__PURE__ */ jsx17("circle", { cx: "8.5", cy: "8.5", r: "1.5" }),
-            /* @__PURE__ */ jsx17("path", { d: "M21 15l-5-5L5 21" })
+            /* @__PURE__ */ jsx18("rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }),
+            /* @__PURE__ */ jsx18("circle", { cx: "8.5", cy: "8.5", r: "1.5" }),
+            /* @__PURE__ */ jsx18("path", { d: "M21 15l-5-5L5 21" })
           ]
         }
       ),
-      /* @__PURE__ */ jsx17("span", { children: "Click to choose from media library" }),
-      /* @__PURE__ */ jsx17("span", { className: "cover-dropzone-hint", children: "PNG, JPG, WEBP up to 10MB" })
+      /* @__PURE__ */ jsx18("span", { children: "Click to choose from media library" }),
+      /* @__PURE__ */ jsx18("span", { className: "cover-dropzone-hint", children: "PNG, JPG, WEBP up to 10MB" })
     ] }),
-    /* @__PURE__ */ jsx17("input", { type: "hidden", name, id, value: coverPreview ?? "", readOnly: true }),
-    /* @__PURE__ */ jsx17("input", { type: "hidden", name: altname || `${(_a = name == null ? void 0 : name.split("_")) == null ? void 0 : _a[0]}_alt`, value: alt, readOnly: true }),
-    /* @__PURE__ */ jsx17(
+    /* @__PURE__ */ jsx18("input", { type: "hidden", name, id, value: coverPreview ?? "", readOnly: true }),
+    /* @__PURE__ */ jsx18("input", { type: "hidden", name: altname || `${(_a = name == null ? void 0 : name.split("_")) == null ? void 0 : _a[0]}_alt`, value: alt, readOnly: true }),
+    /* @__PURE__ */ jsx18(
       "input",
       {
         type: "hidden",
@@ -1467,7 +1611,7 @@ function ImageUploader({
         readOnly: true
       }
     ),
-    modalOpen && /* @__PURE__ */ jsx17(
+    modalOpen && /* @__PURE__ */ jsx18(
       MediaLibraryModal,
       {
         onClose: () => setModalOpen(false),
@@ -1479,12 +1623,12 @@ function ImageUploader({
 }
 
 // src/components/templates/LoginPage.jsx
-import { useState as useState8 } from "react";
+import { useState as useState9 } from "react";
 import { useRouter as useRouter7 } from "next/navigation";
-import { jsx as jsx18, jsxs as jsxs10 } from "react/jsx-runtime";
+import { jsx as jsx19, jsxs as jsxs11 } from "react/jsx-runtime";
 function LoginPage({ loginUrl = "/auth/login", redirectTo = "/admin/dashboard" }) {
-  const [error, setError] = useState8(null);
-  const [loading, setLoading] = useState8(false);
+  const [error, setError] = useState9(null);
+  const [loading, setLoading] = useState9(false);
   const router = useRouter7();
   async function handleSubmit(values) {
     var _a, _b;
@@ -1505,13 +1649,13 @@ function LoginPage({ loginUrl = "/auth/login", redirectTo = "/admin/dashboard" }
     }
     router.push(redirectTo);
   }
-  return /* @__PURE__ */ jsx18("div", { className: "flex h-screen items-center justify-center bg-gray-50", children: /* @__PURE__ */ jsxs10("div", { className: "w-1/2 rounded-lg border border-gray-200 bg-white p-8 shadow-sm", children: [
-    /* @__PURE__ */ jsx18("h1", { className: "mb-6 text-xl font-semibold", children: "Log in" }),
-    /* @__PURE__ */ jsxs10(Form, { onSubmit: handleSubmit, className: "flex flex-col gap-4", children: [
-      /* @__PURE__ */ jsx18(Input, { name: "email", type: "email", placeholder: "Email", required: true }),
-      /* @__PURE__ */ jsx18(Input, { name: "password", type: "password", placeholder: "Password", required: true }),
-      error && /* @__PURE__ */ jsx18("p", { className: "text-sm text-red-600", children: error }),
-      /* @__PURE__ */ jsx18(
+  return /* @__PURE__ */ jsx19("div", { className: "flex h-screen items-center justify-center bg-gray-50", children: /* @__PURE__ */ jsxs11("div", { className: "w-1/2 rounded-lg border border-gray-200 bg-white p-8 shadow-sm", children: [
+    /* @__PURE__ */ jsx19("h1", { className: "mb-6 text-xl font-semibold", children: "Log in" }),
+    /* @__PURE__ */ jsxs11(Form, { onSubmit: handleSubmit, className: "flex flex-col gap-4", children: [
+      /* @__PURE__ */ jsx19(Input, { name: "email", type: "email", placeholder: "Email", required: true }),
+      /* @__PURE__ */ jsx19(Input, { name: "password", type: "password", placeholder: "Password", required: true }),
+      error && /* @__PURE__ */ jsx19("p", { className: "text-sm text-red-600", children: error }),
+      /* @__PURE__ */ jsx19(
         "button",
         {
           type: "submit",
@@ -1525,13 +1669,13 @@ function LoginPage({ loginUrl = "/auth/login", redirectTo = "/admin/dashboard" }
 }
 
 // src/components/molecules/PayloadField.jsx
-import { useState as useState10 } from "react";
+import { useState as useState11 } from "react";
 import { Eye as Eye2, EyeOff } from "lucide-react";
 
 // src/components/atoms/RelationshipField.jsx
-import { useContext as useContext6, useEffect as useEffect9, useMemo as useMemo2, useRef as useRef4, useState as useState9 } from "react";
+import { useContext as useContext7, useEffect as useEffect9, useMemo as useMemo2, useRef as useRef5, useState as useState10 } from "react";
 import { X as X3 } from "lucide-react";
-import { jsx as jsx19, jsxs as jsxs11 } from "react/jsx-runtime";
+import { jsx as jsx20, jsxs as jsxs12 } from "react/jsx-runtime";
 function docLabel(doc) {
   return (doc == null ? void 0 : doc.name) ?? (doc == null ? void 0 : doc.title) ?? (doc == null ? void 0 : doc.id);
 }
@@ -1546,11 +1690,11 @@ function normalizeDefaultDocs(value) {
 }
 function RelationshipField({ field }) {
   const { name, relationTo, label, required, hasMany } = field;
-  const contextDefaults = useContext6(DefaultsContext);
+  const contextDefaults = useContext7(DefaultsContext);
   const { data, loading } = useGet(`/api/${relationTo}?limit=200`);
   const options = (data == null ? void 0 : data.docs) ?? [];
   if (hasMany) {
-    return /* @__PURE__ */ jsx19(
+    return /* @__PURE__ */ jsx20(
       RelationshipMultiSelect,
       {
         name,
@@ -1562,8 +1706,8 @@ function RelationshipField({ field }) {
       }
     );
   }
-  const [selected, setSelected] = useState9(() => toId(contextDefaults == null ? void 0 : contextDefaults[name]) ?? "");
-  return /* @__PURE__ */ jsxs11(
+  const [selected, setSelected] = useState10(() => toId(contextDefaults == null ? void 0 : contextDefaults[name]) ?? "");
+  return /* @__PURE__ */ jsxs12(
     Select,
     {
       name,
@@ -1573,20 +1717,20 @@ function RelationshipField({ field }) {
       value: selected,
       onChange: (e) => setSelected(e.target.value),
       children: [
-        /* @__PURE__ */ jsx19("option", { value: "", children: "Select\u2026" }),
-        options.map((doc) => /* @__PURE__ */ jsx19("option", { value: doc.id, children: docLabel(doc) }, doc.id))
+        /* @__PURE__ */ jsx20("option", { value: "", children: "Select\u2026" }),
+        options.map((doc) => /* @__PURE__ */ jsx20("option", { value: doc.id, children: docLabel(doc) }, doc.id))
       ]
     }
   );
 }
 function RelationshipMultiSelect({ name, label, required, loading, options, defaultValue }) {
   const defaultDocs = useMemo2(() => normalizeDefaultDocs(defaultValue), [defaultValue]);
-  const [selectedIds, setSelectedIds] = useState9(() => defaultDocs.map((d) => d.id));
-  const [query, setQuery] = useState9("");
-  const [isOpen, setIsOpen] = useState9(false);
-  const [highlightedIndex, setHighlightedIndex] = useState9(0);
-  const containerRef = useRef4(null);
-  const inputRef = useRef4(null);
+  const [selectedIds, setSelectedIds] = useState10(() => defaultDocs.map((d) => d.id));
+  const [query, setQuery] = useState10("");
+  const [isOpen, setIsOpen] = useState10(false);
+  const [highlightedIndex, setHighlightedIndex] = useState10(0);
+  const containerRef = useRef5(null);
+  const inputRef = useRef5(null);
   useEffect9(() => {
     setSelectedIds(defaultDocs.map((d) => d.id));
   }, [defaultDocs]);
@@ -1644,8 +1788,8 @@ function RelationshipMultiSelect({ name, label, required, loading, options, defa
       setIsOpen(false);
     }
   };
-  return /* @__PURE__ */ jsxs11("div", { className: "group relative rounded-lg border border-gray-200 px-3 pb-2.5 pt-3.5 transition-colors focus-within:border-gray-900 hover:border-gray-300 focus-within:hover:border-gray-900", children: [
-    /* @__PURE__ */ jsx19(
+  return /* @__PURE__ */ jsxs12("div", { className: "group relative rounded-lg border border-gray-200 px-3 pb-2.5 pt-3.5 transition-colors focus-within:border-gray-900 hover:border-gray-300 focus-within:hover:border-gray-900", children: [
+    /* @__PURE__ */ jsx20(
       "label",
       {
         htmlFor: name,
@@ -1653,29 +1797,29 @@ function RelationshipMultiSelect({ name, label, required, loading, options, defa
         children: label
       }
     ),
-    /* @__PURE__ */ jsxs11("div", { ref: containerRef, className: "relative", children: [
-      /* @__PURE__ */ jsxs11("div", { className: "flex flex-wrap items-center gap-1.5", children: [
-        selectedIds.map((id) => /* @__PURE__ */ jsxs11(
+    /* @__PURE__ */ jsxs12("div", { ref: containerRef, className: "relative", children: [
+      /* @__PURE__ */ jsxs12("div", { className: "flex flex-wrap items-center gap-1.5", children: [
+        selectedIds.map((id) => /* @__PURE__ */ jsxs12(
           "span",
           {
             className: "flex items-center gap-1 rounded-md bg-gray-100 py-1 pl-2 pr-1 text-xs font-medium text-gray-700",
             children: [
               labelForId(id),
-              /* @__PURE__ */ jsx19(
+              /* @__PURE__ */ jsx20(
                 "button",
                 {
                   type: "button",
                   onClick: () => removeId(id),
                   className: "rounded p-0.5 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700",
                   "aria-label": `Remove ${labelForId(id)}`,
-                  children: /* @__PURE__ */ jsx19(X3, { size: 12 })
+                  children: /* @__PURE__ */ jsx20(X3, { size: 12 })
                 }
               )
             ]
           },
           id
         )),
-        /* @__PURE__ */ jsx19(
+        /* @__PURE__ */ jsx20(
           "input",
           {
             ref: inputRef,
@@ -1694,7 +1838,7 @@ function RelationshipMultiSelect({ name, label, required, loading, options, defa
           }
         )
       ] }),
-      isOpen && !loading && /* @__PURE__ */ jsx19("div", { className: "absolute left-0 right-0 top-full z-20 mt-2 max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg", children: filteredOptions.length === 0 ? /* @__PURE__ */ jsx19("div", { className: "px-3 py-2 text-sm text-gray-400", children: options.length === 0 ? "No options available" : "No matches" }) : filteredOptions.map((doc, i) => /* @__PURE__ */ jsx19(
+      isOpen && !loading && /* @__PURE__ */ jsx20("div", { className: "absolute left-0 right-0 top-full z-20 mt-2 max-h-56 overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg", children: filteredOptions.length === 0 ? /* @__PURE__ */ jsx20("div", { className: "px-3 py-2 text-sm text-gray-400", children: options.length === 0 ? "No options available" : "No matches" }) : filteredOptions.map((doc, i) => /* @__PURE__ */ jsx20(
         "button",
         {
           type: "button",
@@ -1707,8 +1851,8 @@ function RelationshipMultiSelect({ name, label, required, loading, options, defa
         doc.id
       )) })
     ] }),
-    selectedIds.map((id) => /* @__PURE__ */ jsx19("input", { type: "hidden", name: `${name}[]`, value: id }, id)),
-    required && /* @__PURE__ */ jsx19(
+    selectedIds.map((id) => /* @__PURE__ */ jsx20("input", { type: "hidden", name: `${name}[]`, value: id }, id)),
+    required && /* @__PURE__ */ jsx20(
       "input",
       {
         type: "text",
@@ -1725,11 +1869,11 @@ function RelationshipMultiSelect({ name, label, required, loading, options, defa
 }
 
 // src/components/molecules/PayloadField.jsx
-import { jsx as jsx20, jsxs as jsxs12 } from "react/jsx-runtime";
+import { jsx as jsx21, jsxs as jsxs13 } from "react/jsx-runtime";
 function PasswordInput({ name, placeholder, required }) {
-  const [showPassword, setShowPassword] = useState10(false);
-  return /* @__PURE__ */ jsxs12("div", { className: "relative w-full", children: [
-    /* @__PURE__ */ jsx20(
+  const [showPassword, setShowPassword] = useState11(false);
+  return /* @__PURE__ */ jsxs13("div", { className: "relative w-full", children: [
+    /* @__PURE__ */ jsx21(
       Input,
       {
         name,
@@ -1739,14 +1883,14 @@ function PasswordInput({ name, placeholder, required }) {
         className: "pr-10"
       }
     ),
-    /* @__PURE__ */ jsx20(
+    /* @__PURE__ */ jsx21(
       "button",
       {
         type: "button",
         onClick: () => setShowPassword((prev) => !prev),
         className: "absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 focus:outline-none",
         "aria-label": showPassword ? "Hide password" : "Show password",
-        children: showPassword ? /* @__PURE__ */ jsx20(EyeOff, { size: 18 }) : /* @__PURE__ */ jsx20(Eye2, { size: 18 })
+        children: showPassword ? /* @__PURE__ */ jsx21(EyeOff, { size: 18 }) : /* @__PURE__ */ jsx21(Eye2, { size: 18 })
       }
     )
   ] });
@@ -1754,56 +1898,56 @@ function PasswordInput({ name, placeholder, required }) {
 function PayloadField({ field }) {
   const { name, type, label, required, options } = field;
   if (type === "select") {
-    return /* @__PURE__ */ jsxs12(Select, { name, placeholder: label, required, children: [
-      /* @__PURE__ */ jsx20("option", { value: "", children: "Select..." }),
+    return /* @__PURE__ */ jsxs13(Select, { name, placeholder: label, required, children: [
+      /* @__PURE__ */ jsx21("option", { value: "", children: "Select..." }),
       options.map((opt) => {
         const value = typeof opt === "string" ? opt : opt.value;
         const optLabel = typeof opt === "string" ? opt : opt.label;
-        return /* @__PURE__ */ jsx20("option", { value, children: optLabel }, value);
+        return /* @__PURE__ */ jsx21("option", { value, children: optLabel }, value);
       })
     ] });
   }
   if (type === "textarea") {
-    return /* @__PURE__ */ jsx20(Textarea, { name, placeholder: label, required });
+    return /* @__PURE__ */ jsx21(Textarea, { name, placeholder: label, required });
   }
   if (type === "email") {
-    return /* @__PURE__ */ jsx20(Input, { name, type: "email", placeholder: label, required });
+    return /* @__PURE__ */ jsx21(Input, { name, type: "email", placeholder: label, required });
   }
   if (type === "number") {
-    return /* @__PURE__ */ jsx20(Input, { name, type: "number", placeholder: label, required });
+    return /* @__PURE__ */ jsx21(Input, { name, type: "number", placeholder: label, required });
   }
   if (type === "password") {
-    return /* @__PURE__ */ jsx20(PasswordInput, { name, placeholder: label, required });
+    return /* @__PURE__ */ jsx21(PasswordInput, { name, placeholder: label, required });
   }
   if (type === "text") {
-    return /* @__PURE__ */ jsx20(Input, { name, type: "text", placeholder: label, required });
+    return /* @__PURE__ */ jsx21(Input, { name, type: "text", placeholder: label, required });
   }
   if (type === "relationship") {
-    return /* @__PURE__ */ jsx20(RelationshipField, { field });
+    return /* @__PURE__ */ jsx21(RelationshipField, { field });
   }
   console.warn(`No renderer for field type "${type}" \u2014 field "${name}" skipped`);
   return null;
 }
 
 // src/components/organisms/PayloadEntityForm.jsx
-import { jsx as jsx21, jsxs as jsxs13 } from "react/jsx-runtime";
+import { jsx as jsx22, jsxs as jsxs14 } from "react/jsx-runtime";
 function PayloadEntityForm({ collectionFields, defaults, onSubmit, externalId = null }) {
-  return /* @__PURE__ */ jsxs13(Form, { defaults, id: externalId, onSubmit, children: [
-    collectionFields.map((field) => /* @__PURE__ */ jsx21(PayloadField, { field }, field.name)),
-    !externalId && /* @__PURE__ */ jsx21("button", { type: "submit", children: "Save" })
+  return /* @__PURE__ */ jsxs14(Form, { defaults, id: externalId, onSubmit, children: [
+    collectionFields.map((field) => /* @__PURE__ */ jsx22(PayloadField, { field }, field.name)),
+    !externalId && /* @__PURE__ */ jsx22("button", { type: "submit", children: "Save" })
   ] });
 }
 
 // src/components/organisms/DateTime.jsx
-import { useState as useState11 } from "react";
+import { useState as useState12 } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { jsx as jsx22, jsxs as jsxs14 } from "react/jsx-runtime";
+import { jsx as jsx23, jsxs as jsxs15 } from "react/jsx-runtime";
 function DateTime({ defaultValue, name = "publishedAt", label = "Publish date" }) {
-  const [publishedAt, setPublishedAt] = useState11(defaultValue ? new Date(defaultValue) : null);
-  return /* @__PURE__ */ jsxs14("fieldset", { children: [
-    label && /* @__PURE__ */ jsx22("legend", { children: label }),
-    /* @__PURE__ */ jsx22(
+  const [publishedAt, setPublishedAt] = useState12(defaultValue ? new Date(defaultValue) : null);
+  return /* @__PURE__ */ jsxs15("fieldset", { children: [
+    label && /* @__PURE__ */ jsx23("legend", { children: label }),
+    /* @__PURE__ */ jsx23(
       DatePicker,
       {
         selected: publishedAt,
@@ -1814,19 +1958,19 @@ function DateTime({ defaultValue, name = "publishedAt", label = "Publish date" }
         placeholderText: "Select date and time"
       }
     ),
-    /* @__PURE__ */ jsx22("input", { type: "hidden", name, value: publishedAt ? publishedAt.toISOString() : "" })
+    /* @__PURE__ */ jsx23("input", { type: "hidden", name, value: publishedAt ? publishedAt.toISOString() : "" })
   ] });
 }
 
 // src/components/organisms/LibraryImageBlock.jsx
-import { useState as useState12 } from "react";
+import { useState as useState13 } from "react";
 import { defaultProps } from "@blocknote/core";
 import {
   ResizableFileBlockWrapper,
   createReactBlockSpec
 } from "@blocknote/react";
 import { ImageIcon as ImageIcon2 } from "lucide-react";
-import { Fragment as Fragment3, jsx as jsx23, jsxs as jsxs15 } from "react/jsx-runtime";
+import { Fragment as Fragment3, jsx as jsx24, jsxs as jsxs16 } from "react/jsx-runtime";
 var LibraryImageBlock = createReactBlockSpec(
   {
     type: "image",
@@ -1849,7 +1993,7 @@ var LibraryImageBlock = createReactBlockSpec(
     meta: { fileBlockAccept: ["image/*"] },
     render: (props) => {
       const { block, editor } = props;
-      const [modalOpen, setModalOpen] = useState12(() => !block.props.url);
+      const [modalOpen, setModalOpen] = useState13(() => !block.props.url);
       const handleSelect = (media) => {
         editor.updateBlock(block, {
           props: {
@@ -1866,18 +2010,18 @@ var LibraryImageBlock = createReactBlockSpec(
         }
         setModalOpen(false);
       };
-      return /* @__PURE__ */ jsxs15(Fragment3, { children: [
+      return /* @__PURE__ */ jsxs16(Fragment3, { children: [
         block.props.url ? (
           // Wrapping only the filled state gives us the native
           // drag-to-resize handles without reintroducing the native
           // "click to upload" empty-state button — the empty branch
           // below stays fully our own (library-only) UI.
-          /* @__PURE__ */ jsx23(
+          /* @__PURE__ */ jsx24(
             ResizableFileBlockWrapper,
             {
               ...props,
-              buttonIcon: /* @__PURE__ */ jsx23(ImageIcon2, { size: 20 }),
-              children: /* @__PURE__ */ jsx23(
+              buttonIcon: /* @__PURE__ */ jsx24(ImageIcon2, { size: 20 }),
+              children: /* @__PURE__ */ jsx24(
                 "img",
                 {
                   src: block.props.url,
@@ -1889,19 +2033,19 @@ var LibraryImageBlock = createReactBlockSpec(
               )
             }
           )
-        ) : /* @__PURE__ */ jsxs15(
+        ) : /* @__PURE__ */ jsxs16(
           "div",
           {
             className: "library-image-placeholder",
             contentEditable: false,
             onClick: () => setModalOpen(true),
             children: [
-              /* @__PURE__ */ jsx23(ImageIcon2, { size: 22 }),
-              /* @__PURE__ */ jsx23("span", { children: "Choose image from library" })
+              /* @__PURE__ */ jsx24(ImageIcon2, { size: 22 }),
+              /* @__PURE__ */ jsx24("span", { children: "Choose image from library" })
             ]
           }
         ),
-        modalOpen && /* @__PURE__ */ jsx23(
+        modalOpen && /* @__PURE__ */ jsx24(
           MediaLibraryModal,
           {
             onClose: handleClose,
@@ -1940,9 +2084,9 @@ var LibraryImageBlock = createReactBlockSpec(
     toExternalHTML: (props) => {
       const { block } = props;
       if (!block.props.url) {
-        return /* @__PURE__ */ jsx23("p", {});
+        return /* @__PURE__ */ jsx24("p", {});
       }
-      return /* @__PURE__ */ jsx23(
+      return /* @__PURE__ */ jsx24(
         "img",
         {
           src: block.props.url,
@@ -1955,9 +2099,9 @@ var LibraryImageBlock = createReactBlockSpec(
 );
 
 // src/components/organisms/ButtonBlock.jsx
-import { useRef as useRef5, useState as useState13 } from "react";
+import { useRef as useRef6, useState as useState14 } from "react";
 import { createReactBlockSpec as createReactBlockSpec2 } from "@blocknote/react";
-import { jsx as jsx24, jsxs as jsxs16 } from "react/jsx-runtime";
+import { jsx as jsx25, jsxs as jsxs17 } from "react/jsx-runtime";
 var ButtonBlock = createReactBlockSpec2(
   {
     type: "button",
@@ -1973,8 +2117,8 @@ var ButtonBlock = createReactBlockSpec2(
     // How it looks INSIDE the editor while editing
     render: (props) => {
       const { text, url, variant } = props.block.props;
-      const containerRef = useRef5(null);
-      const [focused, setFocused] = useState13(false);
+      const containerRef = useRef6(null);
+      const [focused, setFocused] = useState14(false);
       const handleFocus = () => setFocused(true);
       const handleBlur = (e) => {
         var _a;
@@ -1982,7 +2126,7 @@ var ButtonBlock = createReactBlockSpec2(
           setFocused(false);
         }
       };
-      return /* @__PURE__ */ jsxs16(
+      return /* @__PURE__ */ jsxs17(
         "div",
         {
           ref: containerRef,
@@ -1992,7 +2136,7 @@ var ButtonBlock = createReactBlockSpec2(
           onBlur: handleBlur,
           contentEditable: false,
           children: [
-            /* @__PURE__ */ jsx24(
+            /* @__PURE__ */ jsx25(
               "input",
               {
                 className: `cta-button cta-button--${variant}`,
@@ -2003,7 +2147,7 @@ var ButtonBlock = createReactBlockSpec2(
                 })
               }
             ),
-            focused && /* @__PURE__ */ jsxs16(
+            focused && /* @__PURE__ */ jsxs17(
               "div",
               {
                 className: "cta-editor-overlay",
@@ -2022,7 +2166,7 @@ var ButtonBlock = createReactBlockSpec2(
                   zIndex: 1e3
                 },
                 children: [
-                  /* @__PURE__ */ jsx24(
+                  /* @__PURE__ */ jsx25(
                     "input",
                     {
                       className: "cta-editor-block__url",
@@ -2033,7 +2177,7 @@ var ButtonBlock = createReactBlockSpec2(
                       })
                     }
                   ),
-                  /* @__PURE__ */ jsxs16(
+                  /* @__PURE__ */ jsxs17(
                     "select",
                     {
                       className: "cta-editor-block__variant",
@@ -2042,9 +2186,9 @@ var ButtonBlock = createReactBlockSpec2(
                         props: { variant: e.target.value }
                       }),
                       children: [
-                        /* @__PURE__ */ jsx24("option", { value: "primary", children: "Primary" }),
-                        /* @__PURE__ */ jsx24("option", { value: "secondary", children: "Secondary" }),
-                        /* @__PURE__ */ jsx24("option", { value: "outline", children: "Outline" })
+                        /* @__PURE__ */ jsx25("option", { value: "primary", children: "Primary" }),
+                        /* @__PURE__ */ jsx25("option", { value: "secondary", children: "Secondary" }),
+                        /* @__PURE__ */ jsx25("option", { value: "outline", children: "Outline" })
                       ]
                     }
                   )
@@ -2058,15 +2202,15 @@ var ButtonBlock = createReactBlockSpec2(
     // What actually gets saved as HTML for the public site
     toExternalHTML: (props) => {
       const { text, url, variant } = props.block.props;
-      return /* @__PURE__ */ jsx24("a", { href: url, className: `cta-button cta-button--${variant}`, children: text });
+      return /* @__PURE__ */ jsx25("a", { href: url, className: `cta-button cta-button--${variant}`, children: text });
     }
   }
 );
 
 // src/components/organisms/EmbedBlock.jsx
-import { useState as useState14 } from "react";
+import { useState as useState15 } from "react";
 import { createReactBlockSpec as createReactBlockSpec3 } from "@blocknote/react";
-import { jsx as jsx25, jsxs as jsxs17 } from "react/jsx-runtime";
+import { jsx as jsx26, jsxs as jsxs18 } from "react/jsx-runtime";
 function extractUrl(value) {
   var _a;
   const trimmed = value.trim();
@@ -2088,8 +2232,8 @@ var EmbedBlock = createReactBlockSpec3(
   {
     render: (props) => {
       const { block, editor } = props;
-      const [editing, setEditing] = useState14(!block.props.url);
-      const [inputValue, setInputValue] = useState14(block.props.url || "");
+      const [editing, setEditing] = useState15(!block.props.url);
+      const [inputValue, setInputValue] = useState15(block.props.url || "");
       const commitUrl = () => {
         const trimmed = inputValue.trim();
         if (trimmed) {
@@ -2119,7 +2263,7 @@ var EmbedBlock = createReactBlockSpec3(
         }
       };
       if (editing) {
-        return /* @__PURE__ */ jsx25("div", { className: "w-full", contentEditable: false, children: /* @__PURE__ */ jsx25(
+        return /* @__PURE__ */ jsx26("div", { className: "w-full", contentEditable: false, children: /* @__PURE__ */ jsx26(
           "input",
           {
             autoFocus: true,
@@ -2132,13 +2276,13 @@ var EmbedBlock = createReactBlockSpec3(
           }
         ) });
       }
-      return /* @__PURE__ */ jsxs17(
+      return /* @__PURE__ */ jsxs18(
         "div",
         {
           className: "group relative w-full overflow-hidden rounded-lg",
           contentEditable: false,
           children: [
-            /* @__PURE__ */ jsx25(
+            /* @__PURE__ */ jsx26(
               "iframe",
               {
                 src: block.props.url,
@@ -2147,7 +2291,7 @@ var EmbedBlock = createReactBlockSpec3(
                 allowFullScreen: true
               }
             ),
-            /* @__PURE__ */ jsx25(
+            /* @__PURE__ */ jsx26(
               "button",
               {
                 type: "button",
@@ -2183,25 +2327,645 @@ var EmbedBlock = createReactBlockSpec3(
     toExternalHTML: (props) => {
       const { url } = props.block.props;
       if (!url) {
-        return /* @__PURE__ */ jsx25("p", {});
+        return /* @__PURE__ */ jsx26("p", {});
       }
-      return /* @__PURE__ */ jsx25("div", { className: "embed-container relative aspect-video w-full overflow-hidden rounded-lg [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0", children: /* @__PURE__ */ jsx25("iframe", { src: url, loading: "lazy", allowFullScreen: true }) });
+      return /* @__PURE__ */ jsx26("div", { className: "embed-container relative aspect-video w-full overflow-hidden rounded-lg [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0", children: /* @__PURE__ */ jsx26("iframe", { src: url, loading: "lazy", allowFullScreen: true }) });
     }
   }
 );
 
+// src/components/organisms/BlockNote.jsx
+import { forwardRef, useEffect as useEffect10, useImperativeHandle, useState as useState16 } from "react";
+import {
+  BlockNoteSchema,
+  defaultBlockSpecs,
+  filterSuggestionItems,
+  insertOrUpdateBlockForSlashMenu
+} from "@blocknote/core";
+import { BlockNoteView } from "@blocknote/mantine";
+import "@blocknote/mantine/style.css";
+import {
+  FormattingToolbar,
+  FormattingToolbarController,
+  getDefaultReactSlashMenuItems,
+  getFormattingToolbarItems,
+  SuggestionMenuController,
+  useCreateBlockNote,
+  useSelectedBlocks
+} from "@blocknote/react";
+import { Frame, ImageIcon as ImageIcon3, Link2 as Link22 } from "lucide-react";
+import { jsx as jsx27, jsxs as jsxs19 } from "react/jsx-runtime";
+var schema = BlockNoteSchema.create({
+  blockSpecs: {
+    ...defaultBlockSpecs,
+    button: ButtonBlock(),
+    image: LibraryImageBlock(),
+    embed: EmbedBlock()
+  }
+});
+var SEO_REL_OPTIONS = ["nofollow", "noindex", "noimageindex", "noarchive", "nosnippet"];
+var FILE_TOOLBAR_BLOCK_TYPES = ["video", "audio", "file"];
+function ArticleFormattingToolbar({ editor }) {
+  const selectedBlocks = useSelectedBlocks(editor);
+  const blockType = selectedBlocks.length === 1 ? selectedBlocks[0].type : void 0;
+  const allowFileButtons = FILE_TOOLBAR_BLOCK_TYPES.includes(blockType);
+  const items = getFormattingToolbarItems().filter((item) => {
+    const key = typeof item.key === "string" ? item.key.toLowerCase() : "";
+    const isFileButton = key.includes("file");
+    return allowFileButtons || !isFileButton;
+  });
+  return /* @__PURE__ */ jsx27(FormattingToolbar, { children: items });
+}
+var ArticleEditor = forwardRef(function ArticleEditor2({ initialHTML }, ref) {
+  const { post } = useApi();
+  const [loaded, setLoaded] = useState16(false);
+  const [linkRels, setLinkRels] = useState16({});
+  const [activeLinkInfo, setActiveLinkInfo] = useState16(null);
+  const editor = useCreateBlockNote({
+    schema,
+    // Still used by other upload-capable blocks (file/video/audio) if present.
+    // No longer used by "image" — that block only inserts via the media library.
+    uploadFile: async (file) => {
+      const { host } = getRuntimeConfig();
+      const formData = new FormData();
+      formData.append("UploadFiles", file);
+      const res = await post("/articles/image", formData);
+      return `${host}/uploads/articles/images/${res.name}`;
+    }
+  });
+  useEffect10(() => {
+    async function loadContent() {
+      if (initialHTML && typeof window !== "undefined") {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(initialHTML, "text/html");
+        const extractedRels = {};
+        doc.querySelectorAll("a[href]").forEach((a) => {
+          const href = a.getAttribute("href");
+          const rel = a.getAttribute("rel") || "";
+          if (href && rel) {
+            const rels = rel.toLowerCase().split(/\s+/).filter((r) => SEO_REL_OPTIONS.includes(r));
+            if (rels.length) {
+              extractedRels[href] = rels;
+            }
+          }
+        });
+        if (Object.keys(extractedRels).length) {
+          setLinkRels(extractedRels);
+        }
+        const blocks = await editor.tryParseHTMLToBlocks(initialHTML);
+        editor.replaceBlocks(editor.document, blocks);
+      }
+      setLoaded(true);
+    }
+    loadContent();
+  }, [initialHTML, editor]);
+  const handleEditorMouseOver = (e) => {
+    const a = e.target.closest("a[href]");
+    if (a) {
+      const href = a.getAttribute("href");
+      const rect = a.getBoundingClientRect();
+      setActiveLinkInfo({ href, rect });
+    }
+  };
+  const handleEditorMouseOut = (e) => {
+    const a = e.target.closest("a[href]");
+    if (a) {
+      const related = e.relatedTarget;
+      if (!related || !related.closest || !related.closest(".link-rel-menu")) {
+        setActiveLinkInfo(null);
+      }
+    }
+  };
+  const toggleRel = (rel) => {
+    if (!activeLinkInfo) return;
+    setLinkRels((prev) => {
+      const current = prev[activeLinkInfo.href] || [];
+      const exists = current.includes(rel);
+      const next = exists ? current.filter((r) => r !== rel) : [...current, rel];
+      return { ...prev, [activeLinkInfo.href]: next };
+    });
+  };
+  useImperativeHandle(ref, () => ({
+    getHtml: async () => {
+      let html = await editor.blocksToHTMLLossy(editor.document);
+      if (typeof window !== "undefined") {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        if (Object.keys(linkRels).length > 0) {
+          doc.querySelectorAll("a[href]").forEach((a) => {
+            const href = a.getAttribute("href");
+            const rels = linkRels[href];
+            if (rels && rels.length > 0) {
+              a.setAttribute("rel", rels.join(" "));
+            }
+          });
+        }
+        doc.querySelectorAll("img").forEach((img) => {
+          var _a;
+          if ((_a = img.parentElement) == null ? void 0 : _a.classList.contains("image-container")) {
+            return;
+          }
+          const wrapper = doc.createElement("div");
+          wrapper.className = "image-container";
+          img.parentNode.insertBefore(wrapper, img);
+          wrapper.appendChild(img);
+        });
+        html = doc.body.innerHTML;
+      }
+      return html;
+    },
+    getBlocks: () => {
+      return editor.document;
+    },
+    getLinkRels: () => {
+      return linkRels;
+    }
+  }));
+  if (!loaded) return /* @__PURE__ */ jsx27("p", { children: "Loading editor..." });
+  return /* @__PURE__ */ jsxs19(
+    "div",
+    {
+      style: { position: "relative" },
+      onMouseOver: handleEditorMouseOver,
+      onMouseOut: handleEditorMouseOut,
+      children: [
+        /* @__PURE__ */ jsxs19(BlockNoteView, { editor, slashMenu: false, formattingToolbar: false, theme: "light", children: [
+          /* @__PURE__ */ jsx27(
+            FormattingToolbarController,
+            {
+              formattingToolbar: () => /* @__PURE__ */ jsx27(ArticleFormattingToolbar, { editor })
+            }
+          ),
+          /* @__PURE__ */ jsx27(
+            SuggestionMenuController,
+            {
+              triggerCharacter: "/",
+              getItems: async (query) => filterSuggestionItems(
+                [
+                  // The default "Image" item also opens BlockNote's native
+                  // file panel directly, bypassing our block's own render.
+                  // Drop it and insert the block ourselves instead, so only
+                  // LibraryImageBlock's placeholder/media-library flow runs.
+                  ...getDefaultReactSlashMenuItems(editor).filter((item) => item.title !== "Image"),
+                  {
+                    title: "Image",
+                    subtext: "Insert an image from the media library",
+                    group: "custom",
+                    icon: /* @__PURE__ */ jsx27(ImageIcon3, { size: 18 }),
+                    onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, {
+                      type: "image"
+                    }),
+                    aliases: ["image", "img", "picture", "photo", "media"]
+                  },
+                  {
+                    title: "Button",
+                    subtext: "Insert a call-to-action button",
+                    group: "custom",
+                    icon: /* @__PURE__ */ jsx27(Link22, { size: 18 }),
+                    onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, {
+                      type: "button"
+                    }),
+                    aliases: ["button", "cta", "link"]
+                  },
+                  {
+                    title: "Embed",
+                    subtext: "Embed content from a URL (iframe)",
+                    group: "custom",
+                    icon: /* @__PURE__ */ jsx27(Frame, { size: 18 }),
+                    onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, {
+                      type: "embed"
+                    }),
+                    aliases: ["embed", "iframe", "url"]
+                  }
+                ],
+                query
+              )
+            }
+          )
+        ] }),
+        activeLinkInfo && /* @__PURE__ */ jsx27(
+          "div",
+          {
+            className: "link-rel-menu",
+            style: {
+              position: "fixed",
+              top: activeLinkInfo.rect.bottom,
+              left: activeLinkInfo.rect.left,
+              background: "white",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              padding: "8px",
+              display: "flex",
+              gap: "12px",
+              zIndex: 1e3
+            },
+            onMouseLeave: () => setActiveLinkInfo(null),
+            children: SEO_REL_OPTIONS.map((rel) => /* @__PURE__ */ jsxs19(
+              "label",
+              {
+                onMouseDown: (e) => e.preventDefault(),
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  fontSize: "12px",
+                  cursor: "pointer"
+                },
+                children: [
+                  /* @__PURE__ */ jsx27(
+                    "input",
+                    {
+                      type: "checkbox",
+                      checked: (linkRels[activeLinkInfo.href] || []).includes(rel),
+                      onChange: () => toggleRel(rel),
+                      onMouseDown: (e) => e.preventDefault()
+                    }
+                  ),
+                  rel
+                ]
+              },
+              rel
+            ))
+          }
+        )
+      ]
+    }
+  );
+});
+var BlockNote_default = ArticleEditor;
+
+// src/components/organisms/SchemaEditor.jsx
+import { useEffect as useEffect11, useMemo as useMemo3, useRef as useRef7, useState as useState17 } from "react";
+import { Copy, RotateCw as RotateCw2 } from "lucide-react";
+import { jsx as jsx28, jsxs as jsxs20 } from "react/jsx-runtime";
+var LOCKED_KEYS = ["@context", "@graph"];
+function SchemaEditor({ schema: schema2, inputName = "schema" }) {
+  const autoJsonString = useMemo3(() => JSON.stringify(schema2, null, 2), [schema2]);
+  const nextRowId = useRef7(0);
+  const [rows, setRows] = useState17(() => schemaToRows(schema2, nextRowId));
+  const [isManualEdit, setIsManualEdit] = useState17(false);
+  const [rowErrors, setRowErrors] = useState17({});
+  const [copied, setCopied] = useState17(false);
+  function schemaToRows(obj, idRef) {
+    return LOCKED_KEYS.filter((key) => obj[key] !== void 0).map((key) => {
+      const value = obj[key];
+      return {
+        id: idRef.current++,
+        key,
+        value: typeof value === "string" ? value : JSON.stringify(value, null, 2)
+      };
+    });
+  }
+  useEffect11(() => {
+    if (isManualEdit) return;
+    setRows((prevRows) => {
+      const prevByKey = new Map(prevRows.map((r) => [r.key, r]));
+      return LOCKED_KEYS.filter((key) => schema2[key] !== void 0).map((key) => {
+        const value = schema2[key];
+        const strValue = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+        const existing = prevByKey.get(key);
+        return {
+          id: existing ? existing.id : nextRowId.current++,
+          key,
+          value: strValue
+        };
+      });
+    });
+  }, [schema2, isManualEdit]);
+  function updateRowValue(id, value) {
+    setIsManualEdit(true);
+    setRows((prev) => prev.map((r) => r.id === id ? { ...r, value } : r));
+    const trimmed = value.trim();
+    const row = rows.find((r) => r.id === id);
+    const isGraphRow = (row == null ? void 0 : row.key) === "@graph";
+    if (isGraphRow) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (!Array.isArray(parsed)) throw new Error("not an array");
+        setRowErrors((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+      } catch (e) {
+        setRowErrors((prev) => ({
+          ...prev,
+          [id]: "@graph must be a valid JSON array"
+        }));
+      }
+    } else {
+      setRowErrors((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+  }
+  function resetToAuto() {
+    setIsManualEdit(false);
+    setRows(schemaToRows(schema2, nextRowId));
+    setRowErrors({});
+  }
+  const builtSchema = useMemo3(() => {
+    const obj = {};
+    for (const { key, value } of rows) {
+      const trimmed = value.trim();
+      if (key === "@graph") {
+        try {
+          obj[key] = JSON.parse(trimmed);
+          continue;
+        } catch (e) {
+          continue;
+        }
+      }
+      obj[key] = value;
+    }
+    return obj;
+  }, [rows]);
+  const hasRowErrors = Object.keys(rowErrors).length > 0;
+  const submittedJson = useMemo3(
+    () => hasRowErrors ? autoJsonString : JSON.stringify(builtSchema, null, 2),
+    [hasRowErrors, autoJsonString, builtSchema]
+  );
+  async function handleCopy() {
+    const scriptTag = `<script type="application/ld+json">
+${submittedJson}
+</script>`;
+    try {
+      await navigator.clipboard.writeText(scriptTag);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+    }
+  }
+  return /* @__PURE__ */ jsxs20("div", { className: "gap-xs flex-col", style: { marginBlock: "1rem" }, children: [
+    /* @__PURE__ */ jsxs20("div", { className: "flex-between", style: { alignItems: "center" }, children: [
+      /* @__PURE__ */ jsx28("strong", { children: "Schema markup" }),
+      /* @__PURE__ */ jsxs20("div", { className: "gap-sm flex", children: [
+        !hasRowErrors && /* @__PURE__ */ jsxs20(
+          "button",
+          {
+            type: "button",
+            style: { gap: "0.5rem" },
+            className: "multi-entry__add flex-center",
+            onClick: handleCopy,
+            disabled: hasRowErrors,
+            title: hasRowErrors ? "Fix invalid values before copying" : void 0,
+            children: [
+              /* @__PURE__ */ jsx28(Copy, { size: 18 }),
+              copied ? "Copied" : "Copy schema"
+            ]
+          }
+        ),
+        isManualEdit && /* @__PURE__ */ jsxs20(
+          "button",
+          {
+            type: "button",
+            style: { gap: "0.5rem" },
+            className: "multi-entry__add flex-center",
+            onClick: resetToAuto,
+            children: [
+              /* @__PURE__ */ jsx28(RotateCw2, { size: 18 }),
+              "Reset to auto-generated"
+            ]
+          }
+        )
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs20("div", { className: "gap flex", style: { flexWrap: "wrap", alignItems: "flex-start" }, children: [
+      /* @__PURE__ */ jsxs20("div", { className: "gap-xs flex-col", style: { flex: 1, minWidth: 320 }, children: [
+        rows.map((row) => /* @__PURE__ */ jsxs20("div", { className: "gap-xs flex-col", children: [
+          /* @__PURE__ */ jsx28("label", { className: "text-xs", style: { fontWeight: 600, fontSize: 14 }, children: row.key }),
+          row.key === "@context" ? /* @__PURE__ */ jsx28(Input, { value: row.value, onChange: (e) => updateRowValue(row.id, e.target.value) }) : /* @__PURE__ */ jsx28(
+            "textarea",
+            {
+              className: "rounded-md p-2 text-xs leading-relaxed",
+              style: {
+                width: "100%",
+                minHeight: 360,
+                maxHeight: 520,
+                fontFamily: "monospace",
+                border: rowErrors[row.id] ? "1px solid #e24b4a" : "1px solid transparent"
+              },
+              value: row.value,
+              onChange: (e) => updateRowValue(row.id, e.target.value),
+              spellCheck: false
+            }
+          ),
+          rowErrors[row.id] && /* @__PURE__ */ jsxs20("span", { className: "text-xs", style: { color: "#e24b4a", fontSize: "0.8rem" }, children: [
+            "*",
+            rowErrors[row.id]
+          ] })
+        ] }, row.id)),
+        /* @__PURE__ */ jsx28("span", { className: "tip", children: "Tip: You can edit the JSON directly in here." }),
+        isManualEdit && !hasRowErrors && /* @__PURE__ */ jsx28("span", { className: "text-xs", style: { color: "Orange" }, children: "Manual editing mode" })
+      ] }),
+      /* @__PURE__ */ jsxs20("div", { style: { flex: 1, minWidth: 320 }, children: [
+        /* @__PURE__ */ jsx28(
+          "label",
+          {
+            style: {
+              fontWeight: 600,
+              display: "block",
+              fontSize: 14,
+              marginBottom: 8
+            },
+            children: "Live preview"
+          }
+        ),
+        /* @__PURE__ */ jsx28(
+          "pre",
+          {
+            className: "overflow-auto rounded-md bg-gray-900 p-4 text-xs leading-relaxed text-gray-100",
+            style: {
+              minHeight: 360,
+              maxHeight: 520,
+              overflow: "auto",
+              backgroundColor: "#f0f0f0",
+              color: "#000",
+              fontSize: 12,
+              borderRadius: "10px",
+              padding: "10px"
+            },
+            children: `<script type="application/ld+json">
+${submittedJson}
+</script>`
+          }
+        )
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx28("input", { type: "hidden", name: inputName, value: submittedJson, readOnly: true })
+  ] });
+}
+
+// src/components/templates/PostForm.jsx
+import { useEffect as useEffect12, useMemo as useMemo4, useRef as useRef8, useState as useState18 } from "react";
+import { ChevronDown, Eye as Eye3, Loader2 as Loader22, Plus as Plus2 } from "lucide-react";
+
+// src/lib/jsonld.js
+var SITE_URL = "https://abroadkhabar.com";
+var LOGO_URL = `${SITE_URL}/favicon.ico`;
+function toNepalISO(dateStr) {
+  if (!dateStr) return null;
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    const offset = 345;
+    const local = new Date(d.getTime() + offset * 60 * 1e3);
+    const iso = local.toISOString().replace("Z", "");
+    return `${iso.slice(0, 19)}+05:45`;
+  } catch {
+    return null;
+  }
+}
+function clean(obj) {
+  if (obj === null || obj === void 0 || obj === "") return void 0;
+  if (Array.isArray(obj)) {
+    const cleaned = obj.map(clean).filter((x) => x !== void 0);
+    return cleaned.length > 0 ? cleaned : void 0;
+  }
+  if (typeof obj === "object") {
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const cleaned = clean(value);
+      if (cleaned !== void 0) result[key] = cleaned;
+    }
+    return Object.keys(result).length > 0 ? result : void 0;
+  }
+  return obj;
+}
+function articleSchema({
+  url,
+  title,
+  excerpt,
+  publishedAt,
+  updatedAt,
+  imageUrl,
+  authorName,
+  authorUrl,
+  categoryName,
+  categoryUrl
+}) {
+  const articleUrl = url || SITE_URL;
+  const graph = [
+    clean({
+      "@type": "Article",
+      "@id": `${articleUrl}/#article`,
+      headline: title,
+      description: excerpt,
+      url: articleUrl,
+      datePublished: toNepalISO(publishedAt),
+      dateModified: toNepalISO(updatedAt || publishedAt),
+      image: imageUrl ? [imageUrl] : void 0,
+      author: authorName ? {
+        "@type": "Person",
+        name: authorName,
+        ...authorUrl ? { url: authorUrl } : {}
+      } : void 0,
+      publisher: { "@id": `${SITE_URL}/#organization` }
+    })
+  ];
+  const breadcrumbItems = [{ position: 1, name: "Home", item: SITE_URL }];
+  if (categoryName && categoryUrl) {
+    breadcrumbItems.push({
+      position: 2,
+      name: categoryName,
+      item: categoryUrl
+    });
+  }
+  breadcrumbItems.push({ position: breadcrumbItems.length + 1, name: title });
+  graph.push(
+    clean({
+      "@type": "BreadcrumbList",
+      "@id": `${articleUrl}/#breadcrumbs`,
+      itemListElement: breadcrumbItems.map(
+        (crumb) => clean({
+          "@type": "ListItem",
+          position: crumb.position,
+          name: crumb.name,
+          ...crumb.item ? { item: crumb.item } : {}
+        })
+      )
+    })
+  );
+  return clean({
+    "@context": "https://schema.org",
+    "@graph": graph
+  });
+}
+function newsArticleSchema({
+  url,
+  title,
+  excerpt,
+  publishedAt,
+  updatedAt,
+  images: imageUrls,
+  authorName,
+  authorUrl,
+  categoryName,
+  categoryUrl
+}) {
+  const articleUrl = url || SITE_URL;
+  const graph = [
+    clean({
+      "@type": "NewsArticle",
+      "@id": `${articleUrl}/#article`,
+      headline: title,
+      description: excerpt,
+      url: articleUrl,
+      datePublished: toNepalISO(publishedAt),
+      dateModified: toNepalISO(updatedAt || publishedAt),
+      image: imageUrls && imageUrls.length > 0 ? imageUrls : void 0,
+      author: authorName ? {
+        "@type": "Person",
+        name: authorName,
+        ...authorUrl ? { url: authorUrl } : {}
+      } : void 0,
+      publisher: { "@id": `${SITE_URL}/#organization` }
+    })
+  ];
+  const breadcrumbItems = [{ position: 1, name: "Home", item: SITE_URL }];
+  if (categoryName && categoryUrl) {
+    breadcrumbItems.push({
+      position: 2,
+      name: categoryName,
+      item: categoryUrl
+    });
+  }
+  breadcrumbItems.push({ position: breadcrumbItems.length + 1, name: title });
+  graph.push(
+    clean({
+      "@type": "BreadcrumbList",
+      "@id": `${articleUrl}/#breadcrumbs`,
+      itemListElement: breadcrumbItems.map(
+        (crumb) => clean({
+          "@type": "ListItem",
+          position: crumb.position,
+          name: crumb.name,
+          ...crumb.item ? { item: crumb.item } : {}
+        })
+      )
+    })
+  );
+  return clean({
+    "@context": "https://schema.org",
+    "@graph": graph
+  });
+}
+
 // src/components/molecules/InputFields.jsx
-import { Fragment as Fragment4, jsx as jsx26 } from "react/jsx-runtime";
+import { Fragment as Fragment4, jsx as jsx29 } from "react/jsx-runtime";
 var typeMap = {
   text: Textarea
 };
 function InputFields({ fields, className }) {
-  return /* @__PURE__ */ jsx26(Fragment4, { children: fields.map((field, i) => {
+  return /* @__PURE__ */ jsx29(Fragment4, { children: fields.map((field, i) => {
     const isObject = typeof field === "object";
     const rawName = isObject ? field.name : field;
     const [name, shorthandType] = rawName.split(":");
     const Component = typeMap[shorthandType] ?? Input;
-    return /* @__PURE__ */ jsx26(
+    return /* @__PURE__ */ jsx29(
       Component,
       {
         className,
@@ -2213,10 +2977,369 @@ function InputFields({ fields, className }) {
   }) });
 }
 
+// src/components/templates/PostForm.jsx
+import { Fragment as Fragment5, jsx as jsx30, jsxs as jsxs21 } from "react/jsx-runtime";
+var publishroles = ["admin", "editor", "junior_editor"];
+function canPublish(role) {
+  if (!role) return false;
+  return publishroles.includes(role);
+}
+function PostForm({ defaults = null, onSubmit }) {
+  const isEdit = defaults ? true : false;
+  const rteRef = useRef8(null);
+  const { post, patch } = useApi();
+  const { user } = useAuth();
+  const toast = useToast();
+  const { apiBaseUrl, host } = getRuntimeConfig();
+  const siteUrl = host;
+  const [slug, setSlug] = useState18((defaults == null ? void 0 : defaults.slug) ?? "");
+  const [tags, setTags] = useState18((defaults == null ? void 0 : defaults.tags) ? defaults.tags.split(",") : []);
+  const [saveAction, setSaveAction] = useState18((defaults == null ? void 0 : defaults.status) ?? "draft");
+  const [saveDrop, setSaveDrop] = useState18(false);
+  const [title, setTitle] = useState18((defaults == null ? void 0 : defaults.title) ?? "");
+  const [excerpt, setExcerpt] = useState18((defaults == null ? void 0 : defaults.metaDescription) ?? (defaults == null ? void 0 : defaults.excerpt) ?? "");
+  const [ogDescription, setOgDescription] = useState18((defaults == null ? void 0 : defaults.ogDescription) ?? (defaults == null ? void 0 : defaults.og_description) ?? "");
+  const [contentType, setContentType] = useState18((defaults == null ? void 0 : defaults.content_type) ?? "news");
+  const [authorId, setAuthorId] = useState18((defaults == null ? void 0 : defaults.authorId) ?? (defaults == null ? void 0 : defaults.author_id) ?? "");
+  const [authorUrl, setAuthorUrl] = useState18((defaults == null ? void 0 : defaults.authorUrl) ?? (defaults == null ? void 0 : defaults.author_url) ?? "");
+  const [activeTab, setActiveTab] = useState18(0);
+  const [thumbnailPreview, setThumbnailPreview] = useState18((defaults == null ? void 0 : defaults.thumbnail_url) ?? null);
+  const [thumbnailId, setThumbnailId] = useState18((defaults == null ? void 0 : defaults.thumbnail) ?? null);
+  const [coverPreview, setCoverPreview] = useState18((defaults == null ? void 0 : defaults.cover_image_url) ?? null);
+  const [ogPreview, setOgPreview] = useState18((defaults == null ? void 0 : defaults.og_image_url) ?? null);
+  const [loading, setLoading] = useState18(false);
+  const [formKey, setFormKey] = useState18(0);
+  useEffect12(() => {
+    if (!defaults) return;
+    setSlug((defaults == null ? void 0 : defaults.slug) ?? "");
+    setTags((defaults == null ? void 0 : defaults.tags) ? defaults.tags.split(",") : []);
+    setTitle((defaults == null ? void 0 : defaults.title) ?? "");
+    setExcerpt((defaults == null ? void 0 : defaults.metaDescription) ?? (defaults == null ? void 0 : defaults.excerpt) ?? "");
+    setOgDescription((defaults == null ? void 0 : defaults.ogDescription) ?? (defaults == null ? void 0 : defaults.og_description) ?? "");
+    setContentType((defaults == null ? void 0 : defaults.content_type) ?? "news");
+    setAuthorId((defaults == null ? void 0 : defaults.authorId) ?? (defaults == null ? void 0 : defaults.author_id) ?? "");
+    setAuthorUrl((defaults == null ? void 0 : defaults.authorUrl) ?? (defaults == null ? void 0 : defaults.author_url) ?? "");
+    setThumbnailPreview((defaults == null ? void 0 : defaults.thumbnail_url) ?? null);
+    setThumbnailId((defaults == null ? void 0 : defaults.thumbnail) ?? null);
+    setCoverPreview((defaults == null ? void 0 : defaults.cover_image_url) ?? null);
+    setOgPreview((defaults == null ? void 0 : defaults.og_image_url) ?? null);
+    setSaveAction((defaults == null ? void 0 : defaults.status) ?? "draft");
+  }, [defaults]);
+  const schemaDescription = ogDescription.trim() || excerpt;
+  const schemaImages = useMemo4(() => {
+    const candidates = [ogPreview, coverPreview, thumbnailPreview];
+    const seen = /* @__PURE__ */ new Set();
+    const images = [];
+    for (const url of candidates) {
+      if (url && !seen.has(url) && !url.startsWith("blob:")) {
+        seen.add(url);
+        images.push(url);
+      }
+    }
+    return images;
+  }, [ogPreview, coverPreview, thumbnailPreview]);
+  const schema2 = useMemo4(() => {
+    const postUrl = slug ? `${siteUrl}/${contentType}/${slug}` : siteUrl;
+    const shared = {
+      url: postUrl,
+      title,
+      excerpt: schemaDescription,
+      publishedAt: (defaults == null ? void 0 : defaults.published_at) ?? (/* @__PURE__ */ new Date()).toISOString(),
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    if (contentType === "article") {
+      return articleSchema({ ...shared, imageUrl: schemaImages[0] ?? null });
+    }
+    return newsArticleSchema({ ...shared, images: schemaImages });
+  }, [
+    contentType,
+    slug,
+    schemaImages,
+    title,
+    schemaDescription,
+    defaults,
+    siteUrl
+  ]);
+  const handleSubmit = async (formDataValues) => {
+    var _a;
+    const content = await ((_a = rteRef.current) == null ? void 0 : _a.getHtml()) ?? "";
+    if (!(title == null ? void 0 : title.trim())) {
+      toast.error("Please enter a blog title.");
+      return;
+    }
+    if (!(content == null ? void 0 : content.trim())) {
+      toast.error("Please enter content for the blog.");
+      return;
+    }
+    const resolvedStatus = formDataValues.action || saveAction || "draft";
+    const selectedThumbnail = thumbnailId || (isUuid(formDataValues.thumbnail_id) ? formDataValues.thumbnail_id : isUuid(formDataValues.thumbnail) ? formDataValues.thumbnail : void 0);
+    const rawPayload = {
+      title: title.trim(),
+      content: content.trim(),
+      status: resolvedStatus === "published" ? "published" : "draft",
+      metaTitle: formDataValues.meta_title || void 0,
+      metaDescription: formDataValues.meta_description || excerpt || void 0,
+      canonicalUrl: formDataValues.canonical_url || void 0,
+      ogTitle: formDataValues.og_title || title || void 0,
+      ogDescription: ogDescription || excerpt || void 0,
+      redirectUrl: formDataValues.redirect_url || void 0,
+      thumbnail: selectedThumbnail,
+      schema: schema2 ? JSON.stringify(schema2) : void 0
+    };
+    const cleanPayload = removeEmptyFields(rawPayload);
+    setLoading(true);
+    try {
+      const url = isEdit ? `/blogs/${defaults == null ? void 0 : defaults.id}` : `/blogs`;
+      const res = isEdit ? await patch(url, cleanPayload, {
+        success: (res2) => {
+          toast.success(isEdit ? "Blog updated successfully!" : "Blog created successfully!");
+          setFormKey((prev) => prev + 1);
+          onSubmit == null ? void 0 : onSubmit(res2);
+        }
+      }) : await post(url, cleanPayload, {
+        success: (res2) => {
+          toast.success(isEdit ? "Blog updated successfully!" : "Blog created successfully!");
+          setFormKey((prev) => prev + 1);
+          onSubmit == null ? void 0 : onSubmit(res2);
+        }
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unable to save blog. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+  return /* @__PURE__ */ jsx30("div", { className: "flex h-screen flex-col overflow-hidden bg-white font-sans text-gray-900", children: /* @__PURE__ */ jsxs21(
+    Form,
+    {
+      defaults: defaults ?? {},
+      onSubmit: handleSubmit,
+      className: "flex h-full flex-col overflow-hidden",
+      children: [
+        /* @__PURE__ */ jsxs21("div", { className: "relative flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4", children: [
+          /* @__PURE__ */ jsxs21("div", { className: "flex items-center gap-4 text-sm text-gray-500", children: [
+            /* @__PURE__ */ jsxs21("span", { children: [
+              "Status:",
+              " ",
+              /* @__PURE__ */ jsx30("strong", { className: "font-medium text-gray-900 capitalize", children: (defaults == null ? void 0 : defaults.status) || "Draft" })
+            ] }),
+            /* @__PURE__ */ jsx30("span", { className: "hidden lg:inline", children: "Last saved 3hr ago" }),
+            (defaults == null ? void 0 : defaults.published_at) && /* @__PURE__ */ jsxs21("span", { className: "hidden xl:inline", children: [
+              "Created: ",
+              new Date(defaults.published_at).toLocaleString()
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs21("div", { className: "flex items-center gap-3", children: [
+            defaults && /* @__PURE__ */ jsxs21(
+              "button",
+              {
+                type: "submit",
+                name: "action",
+                value: "preview",
+                className: "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900",
+                children: [
+                  /* @__PURE__ */ jsx30(Eye3, { size: 18 }),
+                  " Preview"
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxs21("div", { className: "relative inline-flex rounded-lg shadow-sm", children: [
+              /* @__PURE__ */ jsx30(
+                "button",
+                {
+                  type: "submit",
+                  name: "action",
+                  value: saveAction,
+                  disabled: loading,
+                  className: "relative inline-flex items-center rounded-l-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:z-10 focus:outline-none disabled:opacity-50",
+                  children: loading ? /* @__PURE__ */ jsxs21(Fragment5, { children: [
+                    /* @__PURE__ */ jsx30(Loader22, { size: 16, className: "mr-2 animate-spin" }),
+                    "Saving..."
+                  ] }) : saveAction === "draft" ? "Save Draft" : saveAction === "published" ? "Publish" : "Submit"
+                }
+              ),
+              /* @__PURE__ */ jsx30(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => setSaveDrop(!saveDrop),
+                  className: "relative -ml-px inline-flex items-center rounded-r-lg border-l border-blue-700 bg-blue-600 px-2 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:z-10 focus:outline-none",
+                  children: /* @__PURE__ */ jsx30(
+                    ChevronDown,
+                    {
+                      size: 16,
+                      className: saveDrop ? "rotate-180 transition-transform" : "transition-transform"
+                    }
+                  )
+                }
+              ),
+              saveDrop && /* @__PURE__ */ jsx30("div", { className: "ring-opacity-5 absolute top-full right-0 z-10 mt-1 w-32 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black", children: /* @__PURE__ */ jsxs21("div", { className: "py-1", children: [
+                /* @__PURE__ */ jsx30(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => {
+                      setSaveAction(canPublish(user == null ? void 0 : user.role) ? "published" : "pending");
+                      setSaveDrop(false);
+                    },
+                    className: "block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100",
+                    children: canPublish(user == null ? void 0 : user.role) ? "Publish" : "Submit"
+                  }
+                ),
+                /* @__PURE__ */ jsx30(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => {
+                      setSaveAction("draft");
+                      setSaveDrop(false);
+                    },
+                    className: "block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100",
+                    children: "Save Draft"
+                  }
+                )
+              ] }) })
+            ] })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs21("div", { className: "flex flex-1 overflow-hidden", children: [
+          /* @__PURE__ */ jsx30("div", { className: "flex-1 overflow-y-auto scroll-smooth bg-white", children: /* @__PURE__ */ jsxs21("div", { className: "mx-auto w-full max-w-[840px] px-8 py-12 lg:px-12", children: [
+            /* @__PURE__ */ jsx30(
+              "textarea",
+              {
+                name: "title",
+                placeholder: "Add title",
+                className: "w-full resize-none border-none bg-transparent p-0 font-serif text-5xl leading-tight font-bold text-gray-900 placeholder-gray-300 focus:border-none focus:ring-0 focus:outline-none",
+                value: title,
+                onChange: (e) => {
+                  setTitle(e.target.value);
+                  e.target.style.height = "auto";
+                  e.target.style.height = e.target.scrollHeight + "px";
+                },
+                rows: 1,
+                style: { overflow: "hidden" },
+                required: true
+              }
+            ),
+            /* @__PURE__ */ jsx30("div", { className: "mt-8 min-h-[400px]", children: /* @__PURE__ */ jsx30(BlockNote_default, { ref: rteRef, initialHTML: defaults == null ? void 0 : defaults.content }) })
+          ] }) }),
+          /* @__PURE__ */ jsxs21("div", { className: "flex w-[350px] shrink-0 flex-col border-l border-gray-200 bg-white", children: [
+            /* @__PURE__ */ jsx30("div", { className: "flex shrink-0 border-b border-gray-200 px-2 pt-2", children: ["Post", "Meta", "SEO"].map((tab, index) => /* @__PURE__ */ jsx30(
+              "button",
+              {
+                type: "button",
+                onClick: () => setActiveTab(index),
+                className: `flex-1 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${activeTab === index ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-900"}`,
+                children: tab
+              },
+              index
+            )) }),
+            /* @__PURE__ */ jsxs21("div", { className: "flex-1 overflow-y-auto", children: [
+              activeTab === 0 && /* @__PURE__ */ jsxs21("div", { className: "flex flex-col divide-y divide-gray-100", children: [
+                /* @__PURE__ */ jsxs21("div", { className: "flex flex-col gap-4 p-4", children: [
+                  /* @__PURE__ */ jsx30("h3", { className: "text-xs font-semibold tracking-wider text-gray-900 uppercase", children: "Status & Visibility" }),
+                  /* @__PURE__ */ jsxs21("div", { className: "flex flex-col gap-1", children: [
+                    /* @__PURE__ */ jsx30("label", { className: "text-sm font-medium text-gray-700" }),
+                    /* @__PURE__ */ jsx30(DateTime, { name: "published_at", defaultValue: defaults == null ? void 0 : defaults.published_at })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxs21("div", { className: "flex flex-col gap-4 p-4", children: [
+                  /* @__PURE__ */ jsx30("h3", { className: "text-xs font-semibold tracking-wider text-gray-900 uppercase", children: "Featured Image" }),
+                  /* @__PURE__ */ jsx30("div", { className: "group relative cursor-pointer rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 transition-colors hover:border-blue-400 hover:bg-blue-50", children: /* @__PURE__ */ jsx30(
+                    ImageUploader,
+                    {
+                      name: "cover",
+                      defaultCover: coverPreview,
+                      setCoverImage: (media) => {
+                        if (media == null ? void 0 : media.url) setCoverPreview(media.url);
+                        else setCoverPreview(null);
+                      }
+                    }
+                  ) })
+                ] }),
+                /* @__PURE__ */ jsxs21("div", { className: "flex flex-col gap-4 p-4", children: [
+                  /* @__PURE__ */ jsx30("h3", { className: "text-xs font-semibold tracking-wider text-gray-900 uppercase", children: "Excerpt" }),
+                  /* @__PURE__ */ jsx30(
+                    Textarea,
+                    {
+                      name: "excerpt",
+                      placeholder: "Write an excerpt (optional)",
+                      value: excerpt,
+                      onChange: (e) => setExcerpt(e.target.value)
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxs21("div", { className: "flex flex-col gap-4 p-4", children: [
+                  /* @__PURE__ */ jsx30("h3", { className: "text-xs font-semibold tracking-wider text-gray-900 uppercase", children: "Article Settings" }),
+                  /* @__PURE__ */ jsx30(
+                    ImageUploader,
+                    {
+                      name: "thumbnail",
+                      defaultCover: thumbnailPreview,
+                      caption: "Thumbnail",
+                      id: "thumb-image-input",
+                      setCoverImage: (media) => {
+                        if (media == null ? void 0 : media.id) {
+                          setThumbnailId(media.id);
+                          setThumbnailPreview(media.url);
+                        } else {
+                          setThumbnailId(null);
+                          setThumbnailPreview(null);
+                        }
+                      }
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsx30(InputFields, { fields: ["redirect_url"] })
+              ] }),
+              activeTab === 1 && /* @__PURE__ */ jsxs21("div", { className: "flex flex-col gap-6 p-4", children: [
+                /* @__PURE__ */ jsx30("h3", { className: "text-xs font-semibold tracking-wider text-gray-900 uppercase", children: "Meta Data" }),
+                /* @__PURE__ */ jsx30(InputFields, { fields: ["meta_title", "canonical_url", "meta_description:text"] })
+              ] }),
+              activeTab === 2 && /* @__PURE__ */ jsxs21("div", { className: "flex flex-col gap-6 p-4", children: [
+                /* @__PURE__ */ jsx30("h3", { className: "text-xs font-semibold tracking-wider text-gray-900 uppercase", children: "SEO Data" }),
+                /* @__PURE__ */ jsx30(InputFields, { fields: ["og_title"] }),
+                /* @__PURE__ */ jsx30(
+                  Textarea,
+                  {
+                    name: "og_description",
+                    placeholder: "OG Description",
+                    value: ogDescription,
+                    onChange: (e) => setOgDescription(e.target.value)
+                  }
+                ),
+                /* @__PURE__ */ jsxs21("div", { className: "flex flex-col gap-2", children: [
+                  /* @__PURE__ */ jsx30("label", { className: "text-sm font-medium text-gray-700", children: "OG Image" }),
+                  /* @__PURE__ */ jsx30("div", { className: "group relative cursor-pointer rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 transition-colors hover:border-blue-400 hover:bg-blue-50", children: /* @__PURE__ */ jsx30(
+                    ImageUploader,
+                    {
+                      name: "og_image_url",
+                      id: "og-image-uploader",
+                      defaultCover: ogPreview,
+                      caption: "OG Image",
+                      setCoverImage: (media) => {
+                        if (media == null ? void 0 : media.url) setOgPreview(media.url);
+                        else setOgPreview(null);
+                      }
+                    }
+                  ) })
+                ] }),
+                /* @__PURE__ */ jsx30(SchemaEditor, { schema: schema2 })
+              ] })
+            ] })
+          ] })
+        ] })
+      ]
+    },
+    (defaults == null ? void 0 : defaults.id) ?? `new-${formKey}`
+  ) });
+}
+
 // src/components/atoms/TagInput.jsx
-import { useId, useRef as useRef6, useState as useState15 } from "react";
+import { useId, useRef as useRef9, useState as useState19 } from "react";
 import { X as X4 } from "lucide-react";
-import { jsx as jsx27, jsxs as jsxs18 } from "react/jsx-runtime";
+import { jsx as jsx31, jsxs as jsxs22 } from "react/jsx-runtime";
 function TagInput({
   value = [],
   onChange,
@@ -2225,9 +3348,9 @@ function TagInput({
   placeholder = "Add a tag and press enter",
   maxTags
 }) {
-  const [inputValue, setInputValue] = useState15("");
-  const [activeIndex, setActiveIndex] = useState15(-1);
-  const inputRef = useRef6(null);
+  const [inputValue, setInputValue] = useState19("");
+  const [activeIndex, setActiveIndex] = useState19(-1);
+  const inputRef = useRef9(null);
   const listId = useId();
   const atLimit = typeof maxTags === "number" && value.length >= maxTags;
   const filteredSuggestions = inputValue.trim() ? suggestions.filter(
@@ -2277,15 +3400,15 @@ function TagInput({
       setActiveIndex(-1);
     }
   }
-  return /* @__PURE__ */ jsxs18("div", { className: "tag-input gap-xs flex-1 flex-col", children: [
-    name && /* @__PURE__ */ jsx27("input", { type: "hidden", name, value: value.join(","), readOnly: true }),
-    /* @__PURE__ */ jsxs18("div", { className: "tag-input__field", onClick: () => {
+  return /* @__PURE__ */ jsxs22("div", { className: "tag-input gap-xs flex-1 flex-col", children: [
+    name && /* @__PURE__ */ jsx31("input", { type: "hidden", name, value: value.join(","), readOnly: true }),
+    /* @__PURE__ */ jsxs22("div", { className: "tag-input__field", onClick: () => {
       var _a;
       return (_a = inputRef.current) == null ? void 0 : _a.focus();
     }, children: [
-      value.map((tag, i) => /* @__PURE__ */ jsxs18("span", { className: "tag-input__tag", children: [
+      value.map((tag, i) => /* @__PURE__ */ jsxs22("span", { className: "tag-input__tag", children: [
         tag,
-        /* @__PURE__ */ jsx27(
+        /* @__PURE__ */ jsx31(
           "button",
           {
             type: "button",
@@ -2295,11 +3418,11 @@ function TagInput({
               e.stopPropagation();
               removeTag(i);
             },
-            children: /* @__PURE__ */ jsx27(X4, { size: 12, strokeWidth: 2.5 })
+            children: /* @__PURE__ */ jsx31(X4, { size: 12, strokeWidth: 2.5 })
           }
         )
       ] }, `${tag}-${i}`)),
-      /* @__PURE__ */ jsx27(
+      /* @__PURE__ */ jsx31(
         "input",
         {
           ref: inputRef,
@@ -2321,7 +3444,7 @@ function TagInput({
         }
       )
     ] }),
-    filteredSuggestions.length > 0 && /* @__PURE__ */ jsx27("ul", { className: "tag-input__suggestions", id: listId, role: "listbox", children: filteredSuggestions.map((s, i) => /* @__PURE__ */ jsx27(
+    filteredSuggestions.length > 0 && /* @__PURE__ */ jsx31("ul", { className: "tag-input__suggestions", id: listId, role: "listbox", children: filteredSuggestions.map((s, i) => /* @__PURE__ */ jsx31(
       "li",
       {
         role: "option",
@@ -2336,7 +3459,7 @@ function TagInput({
       },
       s
     )) }),
-    typeof maxTags === "number" && /* @__PURE__ */ jsxs18("span", { className: "tag-input__count", children: [
+    typeof maxTags === "number" && /* @__PURE__ */ jsxs22("span", { className: "tag-input__count", children: [
       value.length,
       "/",
       maxTags
@@ -2352,6 +3475,7 @@ export {
   Logo as AdminNavLogo,
   AdminProvider,
   AdminShell,
+  BlockNote_default as ArticleEditor,
   AuthProvider,
   BackButton,
   Badge,
@@ -2376,10 +3500,12 @@ export {
   NumberSelector,
   PayloadEntityForm,
   PayloadField,
+  PostForm,
   RateDisplay,
   RateInput,
   RelationshipField,
   ResetButton,
+  SchemaEditor,
   Select,
   TagInput,
   Textarea,
@@ -2389,11 +3515,14 @@ export {
   defineEntities,
   defineEntity,
   getRuntimeConfig,
+  isUuid,
+  removeEmptyFields,
   resolveUrl,
   setRuntimeConfig,
   useApi,
   useAuth,
   useEntity,
   useFetchEntity,
-  useGet
+  useGet,
+  useToast
 };

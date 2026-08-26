@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useApi, useGet } from "../../../contexts/ApiContext.jsx";
-import { useAuth } from "../../../contexts/AuthContext.jsx";
-import { useToast } from "../../../contexts/ToastContext.jsx";
-import { isUuid, removeEmptyFields, slugify } from "../../../utils/utils.js";
-import { getRuntimeConfig } from "../../../lib/runtime.config.js";
+import { useApi, useGet } from "../../contexts/ApiContext.jsx";
+import { useAuth } from "../../contexts/AuthContext.jsx";
+import { useToast } from "../../contexts/ToastContext.jsx";
+import { isUuid, removeEmptyFields, slugify } from "../../utils/utils.js";
+import { getRuntimeConfig } from "../../lib/runtime.config.js";
 import { ChevronDown, Eye, Loader2, Plus } from "lucide-react";
 
-import { articleSchema, newsArticleSchema } from "../../../lib/jsonld.js";
-import { Textarea } from "../../atoms/Input.jsx";
-import { Form } from "../../molecules/Form.jsx";
-import { ImageUploader } from "../../templates/ImageUploader.jsx";
-import { InputFields } from "../../molecules/InputFields.jsx";
-import { DateTime } from "../DateTime.jsx";
-import ArticleEditor from "../BlockNote.jsx";
-import { SchemaEditor } from "../SchemaEditor.jsx";
+import { articleSchema, newsArticleSchema } from "../../lib/jsonld.js";
+import { Textarea } from "../atoms/Input.jsx";
+import { Form } from "../molecules/Form.jsx";
+import { ImageUploader } from "./ImageUploader.jsx";
+import { InputFields } from "../molecules/InputFields.jsx";
+import { DateTime } from "../organisms/DateTime.jsx";
+import ArticleEditor from "../organisms/BlockNote.jsx";
+import { SchemaEditor } from "../organisms/SchemaEditor.jsx";
 
 const publishroles = ["admin", "editor", "junior_editor"];
 

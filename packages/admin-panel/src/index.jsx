@@ -38,7 +38,7 @@ export { ButtonBlock } from "./components/organisms/ButtonBlock.jsx";
 export { EmbedBlock } from "./components/organisms/EmbedBlock.jsx";
 export { default as ArticleEditor } from "./components/organisms/BlockNote.jsx";
 export { SchemaEditor } from "./components/organisms/SchemaEditor.jsx";
-export { PostForm } from "./components/organisms/forms/PostForm.jsx";
+export { PostForm } from "./components/templates/PostForm.jsx";
 
 // --- Molecules ---
 export { default as Breadcrumb } from "./components/molecules/Breadcrumb.jsx";
