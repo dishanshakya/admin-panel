@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
-const REPO_URL = "https://github.com/archlynx/admin-panel.git";
+const REPO_URL = "https://github.com/dishanshakya/admin-panel.git";
 const CWD = process.cwd();
 
 function run(cmd, opts = {}) {
