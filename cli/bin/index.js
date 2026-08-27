@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
-const REPO_URL = "https://github.com/dishanshakya/admin-panel.git";
+const REPO_URL = "https://github.com/archlynx/admin-panel.git";
 const CWD = process.cwd();
 
 function run(cmd, opts = {}) {
@@ -73,29 +73,29 @@ async function main() {
     process.exit(1);
   }
 
-  // 2. Copy packages/admin into the target project — plain folder copy,
+  // 2. Copy the admin package into src/packages/admin — plain folder copy,
   // no workspace registration. Just files on disk, imported by relative
   // path from wherever the app mounts the admin panel.
-  const targetPackageDir = path.join(CWD, "packages", "admin");
-  fs.mkdirSync(path.join(CWD, "packages"), { recursive: true });
+  const targetPackageDir = path.join(CWD, "src", "packages", "admin");
+  fs.mkdirSync(path.join(CWD, "src", "packages"), { recursive: true });
 
   if (fs.existsSync(targetPackageDir)) {
     const { overwritePkg } = await prompts({
       type: "confirm",
       name: "overwritePkg",
-      message: "packages/admin already exists. Overwrite it?",
+      message: "src/packages/admin already exists. Overwrite it?",
       initial: false,
     });
     if (overwritePkg) {
       fs.rmSync(targetPackageDir, { recursive: true, force: true });
       fs.cpSync(sourcePackageDir, targetPackageDir, { recursive: true });
-      console.log("Replaced packages/admin.");
+      console.log("Replaced src/packages/admin.");
     } else {
-      console.log("Skipped copying packages/admin (kept your existing copy).");
+      console.log("Skipped copying admin package (kept your existing copy).");
     }
   } else {
     fs.cpSync(sourcePackageDir, targetPackageDir, { recursive: true });
-    console.log("Copied packages/admin.");
+    console.log("Copied admin package to src/packages/admin.");
   }
 
   // 3. Sanity-check the target project
@@ -186,13 +186,13 @@ async function main() {
   console.log("   NEXT_PUBLIC_API=<your API base URL>");
   console.log("   NEXT_PUBLIC_HOST=<your media/asset host>\n");
   console.log("2. Add to tailwind.config.js content array:");
-  console.log('   "./packages/admin/**/*.{js,jsx}"\n');
+  console.log('   "./src/packages/admin/**/*.{js,jsx}"\n');
   console.log("3. Fill in src/app/admin/entities.js with your real entities.\n");
   console.log("4. Mount it — e.g. src/app/admin/layout.js:");
   console.log('   import "@/admin.config";');
-  console.log('   import { AdminProvider } from "../../../packages/admin/index.jsx";\n');
+  console.log('   import { AdminProvider } from "../../packages/admin/index.jsx";\n');
   console.log("5. pnpm run dev\n");
-  console.log("Note: packages/admin is now yours to edit directly —");
+  console.log("Note: src/packages/admin is now yours to edit directly —");
   console.log("no build step, no package registration, changes show up on save.\n");
 }
 

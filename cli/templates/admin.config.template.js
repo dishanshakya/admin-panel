@@ -1,4 +1,4 @@
-import { setRuntimeConfig } from "../packages/admin/index.jsx";
+import { setRuntimeConfig } from "./packages/admin/index.jsx";
 import { entities } from "./app/admin/entities";
 
 export const adminConfig = {
