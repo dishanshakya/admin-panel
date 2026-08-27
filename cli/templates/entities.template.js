@@ -1,4 +1,4 @@
-import { defineEntities, defineEntity } from "@archlynx/admin-panel";
+import { defineEntities, defineEntity } from "../../../packages/admin/index.jsx";
 // import { Users } from "lucide-react";
 
 export const entities = defineEntities({
