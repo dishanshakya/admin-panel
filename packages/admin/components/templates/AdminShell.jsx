@@ -11,14 +11,9 @@ import { getEntities } from "../../lib/runtime.config.js";
 
 export function AdminShell({ children }) {
   const [panel, setPanel] = useState(true);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { post } = useApi();
   const router = useRouter();
-
-  const handleLogout = async () => {
-    const res = await post('/api/users/logout');
-    if (res.ok) router.push('/login');
-  };
 
   // Dynamically filter entities based on the user's role and the entity's roles array
   const entities = getEntities()
@@ -29,9 +24,9 @@ export function AdminShell({ children }) {
   );
 
   return (
-    <div className="flex h-screen bg-black-500">
+    <div className="flex h-screen bg-black-500 text-xs">
       <div
-        className={`relative flex flex-col gap-1 border-r border-gray-200 bg-gray-50 p-3 transition-all duration-200 ${
+        className={`relative flex flex-col gap-1 border-r border-gray-200 bg-white p-3 transition-all duration-200 ${
           panel ? "w-[220px]" : "w-[72px]"
         }`}
       >
@@ -56,17 +51,19 @@ export function AdminShell({ children }) {
         </div>
       </div>
 
-      <div className="flex flex-1 p-4 gap-4 flex-col overflow-y-auto">
-        <div className='flex justify-between w-full'>
-          <Breadcrumb />
-          <div className='flex gap-md items-center'>
-            <span className='rounded-md p-1 bg-gray-500 text-white text-xs'>{user?.role}</span>
-            <button className='wrapper-btn' title='Logout' onClick={handleLogout}>
-              <LogOut size={18} />
-            </button>
+      <div className="flex flex-1  p-4 bg-gray-50 overflow-y-auto justify-center">
+        <div className='flex flex-col flex-1 overflow-y-auto max-w-[1100px]'>
+          <div className='flex justify-between w-full'>
+            <Breadcrumb />
+            <div className='flex gap-4 items-center pr-4'>
+              <span className='rounded-sm px-2 py-1 bg-blue-50 border border-blue-500 text-blue-500 text-xs'>{user?.role?.toUpperCase() || 'USER'}</span>
+              <button className='wrapper-btn' title='Logout' onClick={logout}>
+                <LogOut size={18} />
+              </button>
+            </div>
           </div>
+          <div className="flex-1 ">{children}</div>
         </div>
-        <div className="flex-1 ">{children}</div>
       </div>
     </div>
   );

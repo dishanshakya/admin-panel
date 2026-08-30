@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { MediaLibraryModal } from "../organisms/MediaLibraryModal.jsx";
 import { resolveUrl } from "../../utils/utils.js";
+import { fetcher } from "@/utils/utils";
+import { useResolvedDefault } from "../atoms/Input.jsx";
 
 export function ImageUploader({
   name,
@@ -12,21 +14,27 @@ export function ImageUploader({
   id = "cover-image-input",
   caption = "Cover Image",
   defaultCover = null,
+  ...rest
 }) {
   const [coverPreview, setCoverPreview] = useState(defaultCover);
   const [selectedMediaId, setSelectedMediaId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [alt, setAlt] = useState("");
   const [title, setTitle] = useState("");
+  const defaultProps = useResolvedDefault(name, rest);
+  const defValue = defaultProps?.defaultValue
 
   useEffect(() => {
-    setCoverPreview(defaultCover);
-  }, [defaultCover]);
+    if (!defValue) return
+    fetcher(`/media/${defValue}`).then(res => {
+      setCoverPreview(res.item)
+    })
+  }, [defValue]);
 
   const handleSelectMedia = (media) => {
-    setCoverPreview(media.url);
+    setCoverPreview(media);
     setSelectedMediaId(media.id);
-    setAlt(media.alt_text);
+    setAlt(media.alt);
     setTitle(media.title);
     setCoverImage(media); // now a media library reference ({ id, url, filename }), not a raw File
     setModalOpen(false);
@@ -90,14 +98,14 @@ export function ImageUploader({
       )}
 
       {/* Hidden field so the selected media id still submits with the form, if needed */}
-      <input type="hidden" name={name} id={id} value={coverPreview ?? ""} readOnly />
-      <input type="hidden" name={altname || `${name?.split("_")?.[0]}_alt`} value={alt} readOnly />
+      {selectedMediaId && <input type="hidden" name={name} id={id} value={selectedMediaId} readOnly />}
+      {/* <input type="hidden" name={altname || `${name?.split("_")?.[0]}_alt`} value={alt} readOnly />
       <input
         type="hidden"
         name={titlename || `${name?.split("_")?.[0]}_title`}
         value={title}
         readOnly
-      />
+      /> */}
 
       {modalOpen && (
         <MediaLibraryModal

@@ -9,8 +9,7 @@ export function DeleteAction({ route, mutate }) {
   const handleDelete = async () => {
     const confirmed = window.confirm("Are you sure you want to delete this?");
     if (!confirmed) return;
-    const res = await del(`${route}`, { success: "Successfully deleted" });
-    if (res?.statusCode == 200) mutate?.();
+    const res = await del(`${route}`, { success: () => mutate?.() });
   };
 
   return <DeleteButton onClick={handleDelete} />;

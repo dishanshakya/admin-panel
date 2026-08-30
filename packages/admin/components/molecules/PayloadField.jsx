@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react"; // Import icons for the toggle
 import { Input, Textarea, Select } from '../atoms/Input.jsx'
 import { RelationshipField } from "../atoms/RelationshipField.jsx";
+import { ImageUploader } from "../templates/ImageUploader.jsx";
 
 // Dedicated Password component to handle show/hide state
 function PasswordInput({ name, placeholder, required }) {
@@ -31,12 +32,13 @@ function PasswordInput({ name, placeholder, required }) {
 }
 
 export function PayloadField({ field }) {
-  const { name, type, label, required, options } = field;
+  let { name, type, label, required, options } = field;
+  name = name?.split(':')?.[0]
+
 
   if (type === "select") {
     return (
       <Select name={name} placeholder={label} required={required}>
-        <option value="">Select...</option>
         {options.map((opt) => {
           const value = typeof opt === "string" ? opt : opt.value;
           const optLabel = typeof opt === "string" ? opt : opt.label;
@@ -74,6 +76,11 @@ export function PayloadField({ field }) {
   if (type === "relationship") {
     return <RelationshipField field={field} />;
   }
+
+  if (type === "image") {
+    return <ImageUploader name={name} id={label} caption={ label} />;
+  }
+
 
   // relationship, richText, array, upload etc. — not handled generically, see below
   console.warn(`No renderer for field type "${type}" — field "${name}" skipped`);

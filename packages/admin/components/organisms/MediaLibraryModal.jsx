@@ -28,11 +28,14 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
   const fileInputRef = useRef(null);
   const uploadFieldsRef = useRef(null);
 
-  const items = Object.fromEntries(
-    Object.entries(data ?? {}).filter(([, val]) => Array.isArray(val)),
-  );
+  const items = {
+    media: data?.items
+  }
+
+  console.log('media items', items)
 
   useEffect(() => {
+    console.log('getting logged')
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
@@ -65,10 +68,12 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
     setUploading(true);
     const formData = new FormData();
     formData.append("media", file);
-    const alt = uploadFieldsRef.current?.querySelector('input[name="alt_text"]')?.value;
+    const alt = uploadFieldsRef.current?.querySelector('input[name="alt"]')?.value;
     const title = uploadFieldsRef.current?.querySelector('input[name="title"]')?.value;
-    if (alt) formData.append("alt_text", alt);
+    const caption = uploadFieldsRef.current?.querySelector('input[name="caption"]')?.value;
+    if (alt) formData.append("alt", alt);
     if (title) formData.append("title", title);
+    if (caption) formData.append("caption", caption);
     formData.append("type", "image");
 
     const created = await post("/media", formData);
@@ -95,7 +100,7 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
       onClick={onClose}
     >
       <div
-        className="flex w-full max-w-[720px] max-h-[85vh] flex-col gap-4 overflow-hidden rounded-xl bg-white p-5 shadow-2xl"
+        className="flex w-full max-w-[720px] max-h-[85vh] flex-col gap-4 overflow-scroll rounded-xl bg-white p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -174,7 +179,7 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
                             title={item.filename}
                           >
                             <Image
-                              src={resolveUrl(item.url)}
+                              src={resolveUrl(item)}
                               alt={item.alt || item.filename || "media item"}
                               className="h-full w-full object-cover bg-gray-100"
                               fill
@@ -249,8 +254,9 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
             </label>
 
             <div ref={uploadFieldsRef} className="flex flex-col gap-2">
-              <Input name="alt_text" placeholder="Alt text" disabled={uploading} />
+              <Input name="alt" placeholder="Alt text" disabled={uploading} />
               <Input name="title" placeholder="Title" disabled={uploading} />
+              <Input name="caption" placeholder="Caption" disabled={uploading} />
             </div>
 
             <button

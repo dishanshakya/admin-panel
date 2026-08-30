@@ -3,21 +3,38 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApi, useGet } from "./ApiContext.jsx";
+import { getRuntimeConfig } from "../lib/runtime.config.js";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
+  console.log('heres')
   const [user, setUser] = useState(null);
-  const { data, isLoading } = useGet("/auth/me");
+  const { data, isLoading, mutate } = useGet("/auth/me");
   const { post } = useApi();
   const router = useRouter();
+
+  async function refresher(url) {
+    const { apiBaseUrl } = getRuntimeConfig()
+    const res = await fetch(apiBaseUrl + url, {
+      credentials: 'include',
+      method: 'POST'
+    })
+    return res
+
+  }
 
   useEffect(() => {
     if (!data) return;
     if (!data.success) {
-      setUser(null);
-      router.push("/login");
-      return;
+      refresher("/auth/refresh").then(res => {
+        if (!res.ok) {
+          setUser(null);
+          router.replace("/admin/login");
+          return;
+        }
+        else mutate()
+      })
     }
     setUser(data?.user);
   }, [data]);

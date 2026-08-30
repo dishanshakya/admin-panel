@@ -41,6 +41,8 @@ export default function DataTable({
 }) {
   const { name, mutate } = useEntity();
   const { items, total, page, totalPages, hasNextPage, hasPrevPage } = normalizePayloadResponse(data);
+  console.log('data',normalizePayloadResponse(data))
+  console.log('fields', fields)
 
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [isDeleting, setIsDeleting] = useState(false);
@@ -89,7 +91,7 @@ export default function DataTable({
     try {
       const results = await Promise.allSettled(
         Array.from(selectedIds).map((id) =>
-          fetch(`/api/${name}/${id}`, { method: "DELETE" })
+          fetch(`/${name}/${id}`, { method: "DELETE" })
         )
       );
       const failed = results.filter((r) => r.status === "rejected" || r.value?.ok === false);
@@ -104,6 +106,7 @@ export default function DataTable({
   };
 
   const renderCell = (item, field) => {
+    console.log('field key', field)
     const [key, type, ...rest] = field.key.split(":");
     const value = item[key];
 
@@ -192,7 +195,7 @@ export default function DataTable({
           <EditButton />
         </Link>
       )}
-      <DeleteAction route={`/api/${name}/${item.id}`} mutate={mutate} />
+      <DeleteAction route={`/${name}/${item.id}`} mutate={mutate} />
     </>
   );
 

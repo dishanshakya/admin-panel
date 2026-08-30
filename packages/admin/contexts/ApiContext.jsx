@@ -18,7 +18,17 @@ export function useGet(path) {
   const fetch_ = useCallback(async () => {
     setLocalLoading(true);
     try {
-      const res = await fetch(BASE_URL + path, { credentials: "include" });
+      if (!path) return
+      let res = await fetch(BASE_URL + path, { credentials: "include" });
+      if (res.status == 401) {
+        const refresher = await fetch(`${BASE_URL}/auth/refresh`, {
+          credentials: 'include',
+          method: 'POST'
+        })
+        if (!refresher.ok) window.location.reload()
+        res = await fetch(BASE_URL + path, { credentials: "include" })
+      }
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setData(data);
@@ -56,7 +66,16 @@ async function request(method, path, body, baseUrl) {
   }
 
   try {
-    const res = await fetch(`${baseUrl}${path}`, options);
+    let res = await fetch(`${baseUrl}${path}`, options);
+    if (res.status == 401) {
+      const refresher = await fetch(`${baseUrl}/auth/refresh`, {
+        credentials: 'include',
+        method: 'POST'
+      })
+      if (!refresher.ok) window.location.reload()
+      res = await fetch(`${baseUrl}${path}`, options)
+    }
+
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.message || `Request failed (${res.status})`);

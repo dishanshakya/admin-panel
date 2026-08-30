@@ -181,7 +181,7 @@ export function PostForm({ defaults = null, onSubmit }) {
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white font-sans text-gray-900">
+    <div className="flex h-[85vh] flex-col overflow-hidden rounded-sm mt-6 p-4 bg-white font-sans text-gray-900">
       <Form
         key={defaults?.id ?? `new-${formKey}`}
         defaults={defaults ?? {}}
@@ -223,7 +223,7 @@ export function PostForm({ defaults = null, onSubmit }) {
                 name="action"
                 value={saveAction}
                 disabled={loading}
-                className="relative inline-flex items-center rounded-l-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:z-10 focus:outline-none disabled:opacity-50"
+                className="relative inline-flex items-center rounded-l-lg bg-black px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-black/80 focus:z-10 focus:outline-none disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -241,7 +241,7 @@ export function PostForm({ defaults = null, onSubmit }) {
               <button
                 type="button"
                 onClick={() => setSaveDrop(!saveDrop)}
-                className="relative -ml-px inline-flex items-center rounded-r-lg border-l border-blue-700 bg-blue-600 px-2 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:z-10 focus:outline-none"
+                className="relative -ml-px inline-flex items-center rounded-r-lg border-l border-gray-100 bg-black px-2 py-1.5 text-sm font-medium text-white transition-colors hover:bg-black/80 focus:z-10 focus:outline-none"
               >
                 <ChevronDown
                   size={16}
@@ -282,7 +282,7 @@ export function PostForm({ defaults = null, onSubmit }) {
         {/* Main Content Split */}
         <div className="flex flex-1 overflow-hidden">
           {/* Main Editor Area (Left) */}
-          <div className="flex-1 overflow-y-auto scroll-smooth bg-white">
+          <div className="flex-1 overflow-y-auto scrollbar-none scroll-smooth bg-white">
             <div className="mx-auto w-full max-w-[840px] px-8 py-12 lg:px-12">
               <textarea
                 name="title"
@@ -326,7 +326,7 @@ export function PostForm({ defaults = null, onSubmit }) {
             </div>
 
             {/* Sidebar Scrollable Content */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto scrollbar-none">
               {activeTab === 0 && (
                 <div className="flex flex-col divide-y divide-gray-100">
                   <div className="flex flex-col gap-4 p-4">

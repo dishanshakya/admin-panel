@@ -18,7 +18,7 @@ function humanize(name = "") {
     .join(" ");
 }
 
-function useResolvedDefault(name, rest) {
+export function useResolvedDefault(name, rest) {
   const contextDefaults = useContext(DefaultsContext);
   const isControlled = "value" in rest;
   const resolvedDefaultValue = "defaultValue" in rest ? rest.defaultValue : contextDefaults?.[name];
@@ -67,7 +67,7 @@ export function Input({
         id={name}
         name={name}
         required={required}
-        className={`w-full rounded-lg border border-black bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none ${inputClassName || ""}`}
+        className={`w-full rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none ${inputClassName || ""}`}
         {...defaultProps}
         {...rest}
       />
@@ -78,8 +78,9 @@ export function Input({
 export function Select({ placeholder, children, className, name, required, ...rest }) {
   const defaultProps = useResolvedDefault(name, rest);
   const resolvedPlaceholder = placeholder ?? humanize(name);
-  const safeProps = rest.value === null ? { ...rest, value: "" } : rest;
   const selectRef = useRef(null);
+  const hasDefault = defaultProps.defaultValue != null && defaultProps.defaultValue !== "";
+  console.log('select defults', defaultProps)
 
   return (
     <div className={`flex w-full flex-col gap-1.5 ${className || ""}`}>
@@ -91,12 +92,13 @@ export function Select({ placeholder, children, className, name, required, ...re
       )}
       <select
         ref={selectRef}
+        key={defaultProps.defaultValue}
         id={name}
         name={name}
-        className="w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+        className="w-full cursor-pointer appearance-none rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
         {...defaultProps}
-        {...safeProps}
       >
+        {!hasDefault && <option value="">Select...</option>}
         {children}
       </select>
     </div>
@@ -120,7 +122,7 @@ export function Textarea({ placeholder, className, name, required, ...rest }) {
         ref={textareaRef}
         id={name}
         name={name}
-        className="min-h-[100px] w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+        className="min-h-[100px] w-full rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
         {...defaultProps}
         {...rest}
       />

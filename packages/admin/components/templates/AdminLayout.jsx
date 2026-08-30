@@ -2,7 +2,7 @@
 export function AdminLayout({ title, formId, buttonLabel = "Save", children }) {
   return (
     <div className="flex h-full flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/80 px-6 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-gray-50/80 px-6 py-4 backdrop-blur">
         <h1 className="truncate text-xl font-semibold text-gray-900">{title}</h1>
         {formId && (
           <button

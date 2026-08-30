@@ -14,7 +14,7 @@ export function Form({ children, onSubmit, className, defaults = {}, ...rest }) 
 
   return (
     <DefaultsContext.Provider value={defaults}>
-      <form onSubmit={handleSubmit} className={`${className} admin-form`} {...rest}>
+      <form onSubmit={handleSubmit} className={`${className}`} {...rest}>
         {children}
       </form>
     </DefaultsContext.Provider>
