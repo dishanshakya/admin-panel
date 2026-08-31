@@ -48,13 +48,13 @@ export function AdminChildrenLayout({
   if (debouncedSearch) {
     // Note: If you want to search a field other than 'name' dynamically,
     // you could read entityConfig.titleField here.
-    params.set("where[name][like]", debouncedSearch);
+    params.set("search", debouncedSearch);
   }
 
   // Apply active filters to the query params
   Object.entries(activeFilters).forEach(([field, value]) => {
     if (value) {
-      params.set(`where[${field}][equals]`, value);
+      params.set(`${field}`, value);
     }
   });
 

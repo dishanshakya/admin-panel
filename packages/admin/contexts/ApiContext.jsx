@@ -20,14 +20,6 @@ export function useGet(path) {
     try {
       if (!path) return
       let res = await fetch(BASE_URL + path, { credentials: "include" });
-      if (res.status == 401) {
-        const refresher = await fetch(`${BASE_URL}/auth/refresh`, {
-          credentials: 'include',
-          method: 'POST'
-        })
-        if (!refresher.ok) window.location.reload()
-        res = await fetch(BASE_URL + path, { credentials: "include" })
-      }
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -67,21 +59,12 @@ async function request(method, path, body, baseUrl) {
 
   try {
     let res = await fetch(`${baseUrl}${path}`, options);
-    if (res.status == 401) {
-      const refresher = await fetch(`${baseUrl}/auth/refresh`, {
-        credentials: 'include',
-        method: 'POST'
-      })
-      if (!refresher.ok) window.location.reload()
-      res = await fetch(`${baseUrl}${path}`, options)
-    }
-
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.message || `Request failed (${res.status})`);
     }
     if (res.status === 204) return null;
-    return res.json();
+    return await res.json();
   } finally {
   }
 }

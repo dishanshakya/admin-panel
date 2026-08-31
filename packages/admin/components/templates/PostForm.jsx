@@ -341,22 +341,6 @@ export function PostForm({ defaults = null, onSubmit }) {
 
                   <div className="flex flex-col gap-4 p-4">
                     <h3 className="text-xs font-semibold tracking-wider text-gray-900 uppercase">
-                      Featured Image
-                    </h3>
-                    <div className="group relative cursor-pointer rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 transition-colors hover:border-blue-400 hover:bg-blue-50">
-                      <ImageUploader
-                        name="cover"
-                        defaultCover={coverPreview}
-                        setCoverImage={(media) => {
-                          if (media?.url) setCoverPreview(media.url);
-                          else setCoverPreview(null);
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-4 p-4">
-                    <h3 className="text-xs font-semibold tracking-wider text-gray-900 uppercase">
                       Excerpt
                     </h3>
                     <Textarea

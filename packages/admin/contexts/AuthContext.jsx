@@ -27,14 +27,9 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!data) return;
     if (!data.success) {
-      refresher("/auth/refresh").then(res => {
-        if (!res.ok) {
-          setUser(null);
-          router.replace("/admin/login");
-          return;
-        }
-        else mutate()
-      })
+        setUser(null);
+        router.replace("/admin/login");
+        return;
     }
     setUser(data?.user);
   }, [data]);
