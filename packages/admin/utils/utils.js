@@ -86,3 +86,11 @@ export function removeEmptyFields(obj) {
   }
   return result;
 }
+
+export async function fetcher(url) {
+  const res = await fetch(process.env.NEXT_PUBLIC_API + url, {
+    credentials: 'include'
+  })
+  return res.ok ? await res.json(): null
+}
+

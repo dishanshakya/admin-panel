@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { MediaLibraryModal } from "../organisms/MediaLibraryModal.jsx";
-import { resolveUrl } from "../../utils/utils.js";
-import { fetcher } from "@/utils/utils";
+import { resolveUrl, fetcher } from "../../utils/utils.js";
 import { useResolvedDefault } from "../atoms/Input.jsx";
 
 export function ImageUploader({

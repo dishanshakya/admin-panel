@@ -69,5 +69,5 @@ export {
 export { TagInput } from "./components/atoms/TagInput.jsx";
 
 // --- Utils ---
-export { cn, resolveUrl, isUuid, removeEmptyFields } from "./utils/utils.js";
+export { cn, fetcher, resolveUrl, isUuid, removeEmptyFields } from "./utils/utils.js";
 export { useToast } from "./contexts/ToastContext.jsx";
