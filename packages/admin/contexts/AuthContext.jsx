@@ -14,16 +14,6 @@ export function AuthProvider({ children }) {
   const { post } = useApi();
   const router = useRouter();
 
-  async function refresher(url) {
-    const { apiBaseUrl } = getRuntimeConfig()
-    const res = await fetch(apiBaseUrl + url, {
-      credentials: 'include',
-      method: 'POST'
-    })
-    return res
-
-  }
-
   useEffect(() => {
     if (!data) return;
     if (!data.success) {
