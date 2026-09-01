@@ -2,13 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useApi, useGet } from "../../contexts/ApiContext.jsx";
 import { ImageIcon, Loader2, Upload, X } from "lucide-react";
 
-import { Input } from "../atoms/Input.jsx";
-
+import { useApi, useGet } from "../../contexts/ApiContext.jsx";
 import { getMediaRoute } from "../../lib/runtime.config.js";
 import { resolveUrl } from "../../utils/utils.js";
+import { Input, Select } from "../atoms/Input.jsx";
 
 function formatCategoryLabel(key) {
   return key
@@ -29,13 +28,13 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
   const uploadFieldsRef = useRef(null);
 
   const items = {
-    media: data?.items
-  }
+    media: data?.items,
+  };
 
-  console.log('media items', items)
+  console.log("media items", items);
 
   useEffect(() => {
-    console.log('getting logged')
+    console.log("getting logged");
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
@@ -61,6 +60,8 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
     });
   };
 
+  const selectOptions = ["pdf", "docx", "image", "video"];
+
   const handleUpload = async () => {
     const file = fileInputRef.current?.files?.[0];
     if (!file) return;
@@ -71,10 +72,12 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
     const alt = uploadFieldsRef.current?.querySelector('input[name="alt"]')?.value;
     const title = uploadFieldsRef.current?.querySelector('input[name="title"]')?.value;
     const caption = uploadFieldsRef.current?.querySelector('input[name="caption"]')?.value;
+
+    const type = uploadFieldsRef.current?.querySelector('select[name="type"]')?.value;
     if (alt) formData.append("alt", alt);
     if (title) formData.append("title", title);
     if (caption) formData.append("caption", caption);
-    formData.append("type", "image");
+    if (type) formData.append("type", type);
 
     const created = await post("/media", formData);
     setUploading(false);
@@ -100,7 +103,7 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
       onClick={onClose}
     >
       <div
-        className="flex w-full max-w-[720px] max-h-[85vh] flex-col gap-4 overflow-scroll rounded-xl bg-white p-5 shadow-2xl"
+        className="flex max-h-[85vh] w-full max-w-[720px] flex-col gap-4 overflow-scroll rounded-xl bg-white p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -181,7 +184,7 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
                             <Image
                               src={resolveUrl(item)}
                               alt={item.alt || item.filename || "media item"}
-                              className="h-full w-full object-cover bg-gray-100"
+                              className="h-full w-full bg-gray-100 object-cover"
                               fill
                             />
                             <button
@@ -246,7 +249,7 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/webp"
+                accept="image/png, image/jpeg, image/webp, application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 onChange={handleFileChange}
                 hidden
                 disabled={uploading}
@@ -257,6 +260,13 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
               <Input name="alt" placeholder="Alt text" disabled={uploading} />
               <Input name="title" placeholder="Title" disabled={uploading} />
               <Input name="caption" placeholder="Caption" disabled={uploading} />
+              <Select name="type" placeholder="Type" disabled={uploading}>
+                {selectOptions.map((value, index) => (
+                  <option key={index} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </Select>
             </div>
 
             <button
@@ -273,3 +283,4 @@ export function MediaLibraryModal({ onClose, onSelect, name }) {
     </div>
   );
 }
+
