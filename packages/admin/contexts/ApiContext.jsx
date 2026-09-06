@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getRuntimeConfig } from "../lib/runtime.config.js";
+import { useToast } from "./ToastContext.jsx";
 
 export function useHost() {
   return getRuntimeConfig().host;
@@ -11,6 +12,7 @@ export function useHost() {
 const ApiContext = createContext(null);
 
 export function useGet(path) {
+  const toast = useToast();
   const { apiBaseUrl:BASE_URL } = getRuntimeConfig()
   const [data, setData] = useState(null);
   const [localLoading, setLocalLoading] = useState(false);
@@ -72,6 +74,7 @@ async function request(method, path, body, baseUrl) {
 
 export function ApiProvider({ baseUrl, children }) {
   const router = useRouter();
+  const toast = useToast();
 
   const handle = useCallback(
     async (fn, options = {}) => {
