@@ -81,6 +81,18 @@ export function PayloadField({ field }) {
     return <ImageUploader name={name} id={label} caption={ label} />;
   }
 
+  if (type === "date-time") {
+    return <Input name={name} type="datetime-local" aria-label={label} required={required} />;
+  }
+
+  if (type === "time") {
+    return <Input name={name} type="time" placeholder={label} required={required} />;
+  }
+
+
+
+
+
 
   // relationship, richText, array, upload etc. — not handled generically, see below
   console.warn(`No renderer for field type "${type}" — field "${name}" skipped`);
