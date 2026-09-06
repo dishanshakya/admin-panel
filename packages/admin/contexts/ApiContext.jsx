@@ -28,6 +28,7 @@ export function useGet(path) {
       }
       setData(await res.json());
     } catch (err) {
+      toast.error(err)
       console.error(err);
     } finally {
       setLocalLoading(false);
@@ -82,6 +83,7 @@ export function ApiProvider({ baseUrl, children }) {
         }
         return data;
       } catch (err) {
+        toast.error(err)
         console.error(err);
         return null;
       }
