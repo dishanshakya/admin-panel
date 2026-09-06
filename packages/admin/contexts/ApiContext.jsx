@@ -64,7 +64,7 @@ async function request(method, path, body, baseUrl) {
       throw new Error(data.message || `Request failed (${res.status})`);
     }
     if (res.status === 204) return null;
-    return await res.json();
+    return { ok: res.ok, status: res.status, ...(await res.json()) };
   } finally {
   }
 }

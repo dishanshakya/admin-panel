@@ -94,3 +94,11 @@ export async function fetcher(url) {
   return res.ok ? await res.json(): null
 }
 
+export function setPath(obj, path, value) {
+  const keys = path.split(".");
+  const next = structuredClone(obj);
+  let cursor = next;
+  for (let i = 0; i < keys.length - 1; i++) cursor = cursor[keys[i]];
+  cursor[keys[keys.length - 1]] = value;
+  return next;
+}

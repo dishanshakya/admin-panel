@@ -17,14 +17,14 @@ export function AdminProvider({ children }) {
   }
 
   return (
-    <ApiProvider baseUrl={config.apiBaseUrl} >
-      <AuthProvider>
-        <ToastProvider>
-          <AdminGate>
-            <AdminShell>{children}</AdminShell>
-          </AdminGate>
-        </ToastProvider>
-      </AuthProvider>
-    </ApiProvider>
+    <ToastProvider>
+      <ApiProvider baseUrl={config.apiBaseUrl} >
+        <AuthProvider>
+            <AdminGate>
+              <AdminShell>{children}</AdminShell>
+            </AdminGate>
+        </AuthProvider>
+      </ApiProvider>
+    </ToastProvider>
   );
 }

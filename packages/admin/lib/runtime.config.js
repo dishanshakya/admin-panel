@@ -3,7 +3,6 @@ let _config = { apiBaseUrl: null, host: null, mediaRoute: "/media", entities: {}
 
 export function setRuntimeConfig(config) {
   _config = { ..._config, ...config };
-  console.log('Setting Admin configs: ', _config)
 }
 
 export function getRuntimeConfig() {
