@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react"; // Import icons for the toggle
 import { Input, Textarea, Select } from '../atoms/Input.jsx'
 import { RelationshipField } from "../atoms/RelationshipField.jsx";
 import { ImageUploader } from "../templates/ImageUploader.jsx";
+import { MediaListUploader } from "../templates/MediaListUploader.jsx";
 
 // Dedicated Password component to handle show/hide state
 function PasswordInput({ name, placeholder, required }) {
@@ -87,6 +88,16 @@ export function PayloadField({ field }) {
 
   if (type === "time") {
     return <Input name={name} type="time" placeholder={label} required={required} />;
+  }
+
+  if (type === "medialist") {
+    return (
+      <MediaListUploader
+        name={name}
+        caption={field.label}
+        columns={field.columns}
+      />
+    );
   }
 
 
