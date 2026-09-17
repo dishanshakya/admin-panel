@@ -16,10 +16,21 @@ export function ImageUploader({
   caption = "Cover Image",
   defaultCover = null,
   fit = "cover", // "cover" | "contain"
+  mode = "media", // "media" | "url" — controls the shape defaultCover/setCoverImage use
   ...rest
 }) {
-  const [coverPreview, setCoverPreview] = useState(defaultCover);
-  const [selectedMediaId, setSelectedMediaId] = useState(defaultCover?.id ?? null);
+  const isUrlMode = mode === "url";
+
+  const normalizedDefaultCover = isUrlMode
+    ? defaultCover
+      ? { url: defaultCover }
+      : null
+    : defaultCover;
+
+  const [coverPreview, setCoverPreview] = useState(normalizedDefaultCover);
+  const [selectedMediaId, setSelectedMediaId] = useState(
+    isUrlMode ? null : (normalizedDefaultCover?.id ?? null)
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [alt, setAlt] = useState("");
   const [title, setTitle] = useState("");
@@ -27,19 +38,22 @@ export function ImageUploader({
   const defValue = defaultProps?.defaultValue;
 
   useEffect(() => {
+    if (isUrlMode) return; // url mode has no media id to resolve — defaultCover is already the final value
     if (!defValue) return;
     fetcher(`/media/${defValue}`).then((res) => {
       setCoverPreview(res.item);
       setSelectedMediaId(defValue);
     });
-  }, [defValue]);
+  }, [defValue, isUrlMode]);
 
   const handleSelectMedia = (media) => {
     setCoverPreview(media);
-    setSelectedMediaId(media.id);
-    setAlt(media.alt);
-    setTitle(media.title);
-    setCoverImage(media); // now a media library reference ({ id, url, filename }), not a raw File
+    if (!isUrlMode) {
+      setSelectedMediaId(media.id);
+      setAlt(media.alt);
+      setTitle(media.title);
+    }
+    setCoverImage(isUrlMode ? media.url : media); // url mode: parent gets a plain string back
     setModalOpen(false);
   };
 
@@ -48,12 +62,19 @@ export function ImageUploader({
       removeCoverImage();
       return;
     }
-    setCoverImage(null);
+    setCoverImage(isUrlMode ? "" : null);
     setCoverPreview(null);
-    setSelectedMediaId(null);
+    if (!isUrlMode) setSelectedMediaId(null);
   };
 
   const fitClass = fit === "contain" ? "object-contain" : "object-cover";
+
+  // In media mode, coverPreview may be a bare media object that resolveUrl knows
+  // how to turn into a backend-hosted URL. In url mode, coverPreview.url is
+  // already the final, directly-usable src (a frontend /public path or a full
+  // external URL) and must NOT be passed through resolveUrl, which would
+  // wrongly prefix it with the backend's API base URL.
+  const previewSrc = coverPreview ? (isUrlMode ? coverPreview.url : resolveUrl(coverPreview)) : null;
 
   return (
     <div className="flex flex-col gap-2">
@@ -62,7 +83,7 @@ export function ImageUploader({
       {coverPreview ? (
         <div className="group relative h-40 w-full overflow-hidden rounded-lg border border-gray-200">
           <img
-            src={resolveUrl(coverPreview)}
+            src={previewSrc}
             alt="Cover preview"
             className={`block h-full w-full ${fitClass}`}
             onClick={() => setModalOpen(true)}
@@ -102,17 +123,9 @@ export function ImageUploader({
         </button>
       )}
 
-      {/* Hidden field so the selected media id still submits with the form, if needed */}
-      {selectedMediaId && (
+      {!isUrlMode && selectedMediaId && (
         <input type="hidden" name={name} id={id} value={selectedMediaId} readOnly />
       )}
-      {/* <input type="hidden" name={altname || `${name?.split("_")?.[0]}_alt`} value={alt} readOnly />
-      <input
-        type="hidden"
-        name={titlename || `${name?.split("_")?.[0]}_title`}
-        value={title}
-        readOnly
-      /> */}
 
       {modalOpen && (
         <MediaLibraryModal
