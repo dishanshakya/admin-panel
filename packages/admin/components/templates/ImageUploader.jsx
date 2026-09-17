@@ -74,7 +74,7 @@ export function ImageUploader({
   // already the final, directly-usable src (a frontend /public path or a full
   // external URL) and must NOT be passed through resolveUrl, which would
   // wrongly prefix it with the backend's API base URL.
-  const previewSrc = coverPreview ? (isUrlMode ? coverPreview.url : resolveUrl(coverPreview)) : null;
+  const previewSrc = coverPreview ? (isUrlMode ? resolveUrl({ url: coverPreview.url }) : resolveUrl(coverPreview)) : null;
 
   return (
     <div className="flex flex-col gap-2">
