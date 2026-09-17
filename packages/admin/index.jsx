@@ -42,6 +42,7 @@ export { PostForm } from "./components/templates/PostForm.jsx";
 
 // --- Molecules ---
 export { default as Breadcrumb } from "./components/molecules/Breadcrumb.jsx";
+export { default as ArticleBody } from "./components/templates/ArticleBody.jsx";
 export { InputFields } from "./components/molecules/InputFields.jsx";
 export { Form, DefaultsContext } from "./components/molecules/Form.jsx";
 export { PayloadField } from "./components/molecules/PayloadField.jsx";
