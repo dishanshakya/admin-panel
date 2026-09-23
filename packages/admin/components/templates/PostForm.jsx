@@ -1,27 +1,53 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, Eye, Loader2, Plus } from "lucide-react";
+
 import { useApi, useGet } from "../../contexts/ApiContext.jsx";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import { useToast } from "../../contexts/ToastContext.jsx";
-import { isUuid, removeEmptyFields, slugify } from "../../utils/utils.js";
-import { getRuntimeConfig } from "../../lib/runtime.config.js";
-import { ChevronDown, Eye, Loader2, Plus } from "lucide-react";
-
 import { articleSchema, newsArticleSchema } from "../../lib/jsonld.js";
+import { getRuntimeConfig } from "../../lib/runtime.config.js";
+import { isUuid, removeEmptyFields, slugify } from "../../utils/utils.js";
 import { Textarea } from "../atoms/Input.jsx";
 import { Form } from "../molecules/Form.jsx";
-import { ImageUploader } from "./ImageUploader.jsx";
 import { InputFields } from "../molecules/InputFields.jsx";
-import { DateTime } from "../organisms/DateTime.jsx";
 import ArticleEditor from "../organisms/BlockNote.jsx";
+import { DateTime } from "../organisms/DateTime.jsx";
 import { SchemaEditor } from "../organisms/SchemaEditor.jsx";
+import { ImageUploader } from "./ImageUploader.jsx";
 
 const publishroles = ["admin", "editor", "junior_editor"];
 
 function canPublish(role) {
   if (!role) return false;
   return publishroles.includes(role);
+}
+
+function formatTimeAgo(date) {
+  if (!date) return null;
+  const diffMs = Date.now() - new Date(date).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} hr ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `${diffDay} days ago`;
+  return new Date(date).toLocaleDateString();
+}
+
+function SidebarSection({ title, children, className }) {
+  return (
+    <section
+      className={`rounded-xl border border-gray-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${className || ""}`}
+    >
+      <header className="mb-3">
+        <h3 className="text-xs font-semibold tracking-wider text-gray-500 uppercase">{title}</h3>
+      </header>
+      <div className="flex flex-col gap-3">{children}</div>
+    </section>
+  );
 }
 
 export function PostForm({ defaults = null, onSubmit }) {
@@ -35,13 +61,15 @@ export function PostForm({ defaults = null, onSubmit }) {
 
   const [slug, setSlug] = useState(defaults?.slug ?? "");
   const [tags, setTags] = useState(defaults?.tags ? defaults.tags.split(",") : []);
-  const [saveAction, setSaveAction] = useState(defaults?.status ?? "draft");
+  const [saveAction, setSaveAction] = useState(defaults?.status ?? "published");
   const [saveDrop, setSaveDrop] = useState(false);
 
   // --- controlled fields needed for live JSON-LD schema generation ---
   const [title, setTitle] = useState(defaults?.title ?? "");
   const [excerpt, setExcerpt] = useState(defaults?.metaDescription ?? defaults?.excerpt ?? "");
-  const [ogDescription, setOgDescription] = useState(defaults?.ogDescription ?? defaults?.og_description ?? "");
+  const [ogDescription, setOgDescription] = useState(
+    defaults?.ogDescription ?? defaults?.og_description ?? "",
+  );
   const [contentType, setContentType] = useState(defaults?.content_type ?? "news");
   const [authorId, setAuthorId] = useState(defaults?.authorId ?? defaults?.author_id ?? "");
   const [authorUrl, setAuthorUrl] = useState(defaults?.authorUrl ?? defaults?.author_url ?? "");
@@ -69,10 +97,12 @@ export function PostForm({ defaults = null, onSubmit }) {
     setThumbnailId(defaults?.thumbnail ?? null);
     setCoverPreview(defaults?.cover_image_url ?? null);
     setOgPreview(defaults?.og_image_url ?? null);
-    setSaveAction(defaults?.status ?? "draft");
+    setSaveAction(defaults?.status ?? "published");
   }, [defaults]);
 
   const schemaDescription = ogDescription.trim() || excerpt;
+
+  const defaultPublishedAt = defaults?.publishedAt ?? defaults?.published_at;
 
   const schemaImages = useMemo(() => {
     const candidates = [ogPreview, coverPreview, thumbnailPreview];
@@ -94,7 +124,7 @@ export function PostForm({ defaults = null, onSubmit }) {
       url: postUrl,
       title,
       excerpt: schemaDescription,
-      publishedAt: defaults?.published_at ?? new Date().toISOString(),
+      publishedAt: defaultPublishedAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
@@ -103,15 +133,7 @@ export function PostForm({ defaults = null, onSubmit }) {
     }
 
     return newsArticleSchema({ ...shared, images: schemaImages });
-  }, [
-    contentType,
-    slug,
-    schemaImages,
-    title,
-    schemaDescription,
-    defaults,
-    siteUrl,
-  ]);
+  }, [contentType, slug, schemaImages, title, schemaDescription, defaultPublishedAt, siteUrl]);
 
   const handleSubmit = async (formDataValues) => {
     // 1. Extract rich text HTML content from ArticleEditor ref
@@ -128,7 +150,7 @@ export function PostForm({ defaults = null, onSubmit }) {
     }
 
     // 2. Map form fields to backend camelCase schema
-    const resolvedStatus = formDataValues.action || saveAction || "draft";
+    const resolvedStatus = formDataValues.action || saveAction || "published";
     const selectedThumbnail =
       thumbnailId ||
       (isUuid(formDataValues.thumbnail_id)
@@ -141,6 +163,7 @@ export function PostForm({ defaults = null, onSubmit }) {
       title: title.trim(),
       content: content.trim(),
       status: resolvedStatus === "published" ? "published" : "draft",
+      publishedAt: formDataValues.publishedAt || undefined,
       metaTitle: formDataValues.meta_title || undefined,
       metaDescription: formDataValues.meta_description || excerpt || undefined,
       canonicalUrl: formDataValues.canonical_url || undefined,
@@ -158,22 +181,24 @@ export function PostForm({ defaults = null, onSubmit }) {
 
     try {
       const url = isEdit ? `/blogs/${defaults?.id}` : `/blogs`;
-      const res = isEdit ?
-        await patch(url, cleanPayload, {
-          success: (res) => {
-            toast.success(isEdit ? "Blog updated successfully!" : "Blog created successfully!");
-            setFormKey((prev) => prev + 1);
-            onSubmit?.(res);
-        } })
-        :
-        await post(url, cleanPayload, {
-          success: (res) => {
-            toast.success(isEdit ? "Blog updated successfully!" : "Blog created successfully!");
-            setFormKey((prev) => prev + 1);
-            onSubmit?.(res);
-        } })
+      const res = isEdit
+        ? await patch(url, cleanPayload, {
+            success: (res) => {
+              toast.success(isEdit ? "Blog updated successfully!" : "Blog created successfully!");
+              setFormKey((prev) => prev + 1);
+              onSubmit?.(res);
+            },
+          })
+        : await post(url, cleanPayload, {
+            success: (res) => {
+              toast.success(isEdit ? "Blog updated successfully!" : "Blog created successfully!");
+              setFormKey((prev) => prev + 1);
+              onSubmit?.(res);
+            },
+          });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unable to save blog. Please try again.";
+      const errorMessage =
+        err instanceof Error ? err.message : "Unable to save blog. Please try again.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -181,7 +206,7 @@ export function PostForm({ defaults = null, onSubmit }) {
   };
 
   return (
-    <div className="flex h-[85vh] flex-col overflow-hidden rounded-sm mt-6 p-4 bg-white font-sans text-gray-900">
+    <div className="mt-6 flex h-[85vh] flex-col overflow-hidden rounded-sm bg-white p-4 font-sans text-gray-900">
       <Form
         key={defaults?.id ?? `new-${formKey}`}
         defaults={defaults ?? {}}
@@ -194,13 +219,17 @@ export function PostForm({ defaults = null, onSubmit }) {
             <span>
               Status:{" "}
               <strong className="font-medium text-gray-900 capitalize">
-                {defaults?.status || "Draft"}
+                {defaults?.status || saveAction}
               </strong>
             </span>
-            <span className="hidden lg:inline">Last saved 3hr ago</span>
-            {defaults?.published_at && (
+            {defaults?.updatedAt && (
+              <span className="hidden lg:inline">
+                Last saved {formatTimeAgo(defaults.updatedAt)}
+              </span>
+            )}
+            {defaultPublishedAt && (
               <span className="hidden xl:inline">
-                Created: {new Date(defaults.published_at).toLocaleString()}
+                Created: {new Date(defaultPublishedAt).toLocaleString()}
               </span>
             )}
           </div>
@@ -282,7 +311,7 @@ export function PostForm({ defaults = null, onSubmit }) {
         {/* Main Content Split */}
         <div className="flex flex-1 overflow-hidden">
           {/* Main Editor Area (Left) */}
-          <div className="flex-1 overflow-y-auto scrollbar-none scroll-smooth bg-white">
+          <div className="flex-1 scrollbar-none overflow-y-auto scroll-smooth bg-white">
             <div className="mx-auto w-full max-w-[840px] px-8 py-12 lg:px-12">
               <textarea
                 name="title"
@@ -306,56 +335,35 @@ export function PostForm({ defaults = null, onSubmit }) {
           </div>
 
           {/* Right Sidebar */}
-          <div className="flex w-[350px] shrink-0 flex-col border-l border-gray-200 bg-white">
+          <div className="flex w-[350px] shrink-0 flex-col border-l border-gray-200 bg-gray-50/60">
             {/* Sidebar Tabs */}
-            <div className="flex shrink-0 border-b border-gray-200 px-2 pt-2">
+            <div className="flex shrink-0 gap-1 border-b border-gray-200 bg-white px-3 pt-3">
               {["Post", "Meta", "SEO"].map((tab, index) => (
                 <button
                   key={index}
                   type="button"
                   onClick={() => setActiveTab(index)}
-                  className={`flex-1 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
-                    activeTab === index
-                      ? "border-gray-900 text-gray-900"
-                      : "border-transparent text-gray-500 hover:text-gray-900"
+                  className={`relative flex-1 rounded-t-md px-4 py-2.5 text-sm font-medium transition-colors ${
+                    activeTab === index ? "text-gray-900" : "text-gray-400 hover:text-gray-700"
                   }`}
                 >
                   {tab}
+                  {activeTab === index && (
+                    <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-gray-900" />
+                  )}
                 </button>
               ))}
             </div>
 
             {/* Sidebar Scrollable Content */}
-            <div className="flex-1 overflow-y-auto scrollbar-none">
+            <div className="flex-1 scrollbar-none space-y-4 overflow-y-auto p-4">
               {activeTab === 0 && (
-                <div className="flex flex-col divide-y divide-gray-100">
-                  <div className="flex flex-col gap-4 p-4">
-                    <h3 className="text-xs font-semibold tracking-wider text-gray-900 uppercase">
-                      Status & Visibility
-                    </h3>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm font-medium text-gray-700"></label>
-                      <DateTime name="published_at" defaultValue={defaults?.published_at} />
-                    </div>
-                  </div>
+                <>
+                  <SidebarSection title="Status & Visibility">
+                    <DateTime name="publishedAt" defaultValue={defaultPublishedAt} />
+                  </SidebarSection>
 
-                  <div className="flex flex-col gap-4 p-4">
-                    <h3 className="text-xs font-semibold tracking-wider text-gray-900 uppercase">
-                      Excerpt
-                    </h3>
-                    <Textarea
-                      name="excerpt"
-                      placeholder="Write an excerpt (optional)"
-                      value={excerpt}
-                      onChange={(e) => setExcerpt(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-4 p-4">
-                    <h3 className="text-xs font-semibold tracking-wider text-gray-900 uppercase">
-                      Article Settings
-                    </h3>
-
+                  <SidebarSection title="Article Settings">
                     <ImageUploader
                       name="thumbnail"
                       defaultCover={thumbnailPreview}
@@ -371,50 +379,48 @@ export function PostForm({ defaults = null, onSubmit }) {
                         }
                       }}
                     />
-                  </div>
-                  <InputFields fields={["redirect_url"]} />
-                </div>
+                  </SidebarSection>
+                </>
               )}
 
               {activeTab === 1 && (
-                <div className="flex flex-col gap-6 p-4">
-                  <h3 className="text-xs font-semibold tracking-wider text-gray-900 uppercase">
-                    Meta Data
-                  </h3>
-                  <InputFields fields={["meta_title", "canonical_url", "meta_description:text"]} />
-                </div>
+                <>
+                  <SidebarSection title="Search Result">
+                    <InputFields fields={["meta_title", "meta_description:text"]} />
+                  </SidebarSection>
+
+                  <SidebarSection title="Canonical URL">
+                    <InputFields fields={["canonical_url"]} />
+                  </SidebarSection>
+                </>
               )}
 
               {activeTab === 2 && (
-                <div className="flex flex-col gap-6 p-4">
-                  <h3 className="text-xs font-semibold tracking-wider text-gray-900 uppercase">
-                    SEO Data
-                  </h3>
-                  <InputFields fields={["og_title"]} />
-                  <Textarea
-                    name="og_description"
-                    placeholder="OG Description"
-                    value={ogDescription}
-                    onChange={(e) => setOgDescription(e.target.value)}
-                  />
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700">OG Image</label>
-                    <div className="group relative cursor-pointer rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 transition-colors hover:border-blue-400 hover:bg-blue-50">
-                      <ImageUploader
-                        name="og_image_url"
-                        id="og-image-uploader"
-                        defaultCover={ogPreview}
-                        caption="OG Image"
-                        setCoverImage={(media) => {
-                          if (media?.url) setOgPreview(media.url);
-                          else setOgPreview(null);
-                        }}
-                      />
-                    </div>
-                  </div>
+                <>
+                  <SidebarSection title="Social Sharing">
+                    <InputFields fields={["og_title"]} />
+                    <Textarea
+                      name="og_description"
+                      placeholder="OG description (optional)"
+                      value={ogDescription}
+                      onChange={(e) => setOgDescription(e.target.value)}
+                    />
+                    <ImageUploader
+                      name="og_image_url"
+                      id="og-image-uploader"
+                      defaultCover={ogPreview}
+                      caption="OG Image"
+                      setCoverImage={(media) => {
+                        if (media?.url) setOgPreview(media.url);
+                        else setOgPreview(null);
+                      }}
+                    />
+                  </SidebarSection>
 
-                  <SchemaEditor schema={schema} />
-                </div>
+                  <SidebarSection title="Structured Data">
+                    <SchemaEditor schema={schema} />
+                  </SidebarSection>
+                </>
               )}
             </div>
           </div>
